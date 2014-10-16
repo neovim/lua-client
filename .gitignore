@@ -1,3 +1,6 @@
+local.mk
+build
+.deps
 # Object files
 *.o
 *.ko

@@ -24,6 +24,10 @@ external_dependencies = {
 local function make_plat(plat)
   local libs = {'uv', 'pthread'}
 
+  if plat == 'freebsd' then
+    libs[#libs + 1] = 'kvm'
+  end
+
   if plat == 'linux' then
     libs[#libs + 1] = 'rt'
     libs[#libs + 1] = 'dl'

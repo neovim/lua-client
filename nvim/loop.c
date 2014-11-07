@@ -228,6 +228,10 @@ static int loop_send(lua_State *L) {
 static int loop_run(lua_State *L) {
   UV *uv = checkuv(L);
 
+  if (uv->data_cb != LUA_REFNIL) {
+    luaL_error(L, "Loop already running");
+  }
+
   if (uv->error) {
     luaL_error(L, uv->error);
   }

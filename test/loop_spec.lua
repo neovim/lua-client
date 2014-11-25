@@ -5,10 +5,10 @@ describe('loop functions', function()
   local loop
 
   before_each(function()
+    if loop then
+      loop:exit()
+    end
     loop = Loop.new()
-    -- force garbage collection so valgrind can verify that resources are
-    -- cleaned up properly
-    collectgarbage()
   end)
 
   describe('spawn', function()

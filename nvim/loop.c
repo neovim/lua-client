@@ -14,7 +14,7 @@
 typedef struct {
   lua_State *L;
   char read_buffer[0xffff];
-  bool connected, reading;
+  bool connected, reading, exited;
   int data_cb;
   const char *error;
   uv_loop_t loop;
@@ -105,6 +105,7 @@ static int loop_new(lua_State *L) {
   uv->error = NULL;
   uv->connected = false;
   uv->reading = false;
+  uv->exited = false;
   uv->data_cb = LUA_REFNIL;
   uv_loop_init(&uv->loop);
   luaL_getmetatable(L, META_NAME);
@@ -112,17 +113,31 @@ static int loop_new(lua_State *L) {
   return 1;
 }
 
-static int loop_delete(lua_State *L) {
+static int loop_exit(lua_State *L) {
   UV *uv = checkuv(L);
-  uv_stop(&uv->loop);
+
+  if (uv->exited) {
+    return 0;
+  }
+
+  uv->exited = true;
+
+  if (uv->data_cb != LUA_REFNIL) {
+    luaL_error(L, "This should only be called after stopping the loop");
+  }
+
   /* Call uv_close on every active handle */
   uv_walk(&uv->loop, walk_cb, uv);
   /* Run the event loop until all handles are successfully closed */
   while (uv_loop_close(&uv->loop)) {
-    uv_run(&uv->loop, UV_RUN_ONCE);
+    uv_run(&uv->loop, UV_RUN_DEFAULT);
   }
 
   return 0;
+}
+
+static int loop_delete(lua_State *L) {
+  return loop_exit(L);
 }
 
 static int loop_spawn(lua_State *L) {
@@ -192,7 +207,6 @@ static int loop_spawn(lua_State *L) {
 
   free(argv);
   uv->connected = true;
-  uv_read_start((uv_stream_t *)&uv->out, alloc_cb, read_cb);
 
   return 0;
 
@@ -228,6 +242,10 @@ static int loop_send(lua_State *L) {
 static int loop_run(lua_State *L) {
   UV *uv = checkuv(L);
 
+  if (uv->exited) {
+    luaL_error(L, "Loop already exited");
+  }
+
   if (uv->data_cb != LUA_REFNIL) {
     luaL_error(L, "Loop already running");
   }
@@ -239,7 +257,9 @@ static int loop_run(lua_State *L) {
   luaL_checktype(L, 2, LUA_TFUNCTION);
   /* Store the data callback on the registry and save the reference */
   uv->data_cb = luaL_ref(L, LUA_REGISTRYINDEX);
+  uv_read_start((uv_stream_t *)&uv->out, alloc_cb, read_cb);
   uv_run(&uv->loop, UV_RUN_DEFAULT);
+  uv_read_stop((uv_stream_t *)&uv->out);
   luaL_unref(L, LUA_REGISTRYINDEX, uv->data_cb);
   uv->data_cb = LUA_REFNIL;
   return 0;
@@ -257,6 +277,7 @@ static const luaL_reg looplib_m[] = {
   {"send", loop_send},
   {"spawn", loop_spawn},
   {"stop", loop_stop},
+  {"exit", loop_exit},
   {NULL, NULL}
 };
 

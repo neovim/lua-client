@@ -25,7 +25,7 @@ MSGPACK ?= $(DEPS_PREFIX)/lib/luarocks/rocks/lua-messagepack
 COXPCALL ?= $(DEPS_PREFIX)/lib/luarocks/rocks/coxpcall
 
 # Libuv configuration
-LIBUV_URL ?= https://github.com/joyent/libuv/archive/v0.11.29.tar.gz 
+LIBUV_URL ?= https://github.com/joyent/libuv/archive/v0.11.29.tar.gz
 LIBUV ?= $(DEPS_PREFIX)/lib/libuv.a
 LIBUV_LINK_FLAGS = $(shell PKG_CONFIG_PATH='$(DEPS_PREFIX)/lib/pkgconfig'\
 									 pkg-config libuv --libs)
@@ -46,7 +46,7 @@ FETCH ?= curl -L -o -
 # stripping one directory component
 UNTGZ ?= tar xfz - --strip-components=1
 
- 
+
 all: deps nvim/loop.so
 
 deps: | $(LIBUV) $(MSGPACK) $(COXPCALL) $(BUSTED)
@@ -73,15 +73,15 @@ nvim/loop.o: nvim/loop.c $(LUA) $(LIBUV)
 nvim/loop.so: nvim/loop.o
 	$(CC) $(LDFLAGS) $< -o $@ $(LIBUV_LINK_FLAGS)
 
-$(BUSTED): $(LUAROCKS)
+$(BUSTED): | $(LUAROCKS)
 	$(LUAROCKS) install busted
 	$(LUAROCKS) install inspect  # helpful for debugging
 
 $(MSGPACK): $(LUAROCKS)
-	$(LUAROCKS) install lua-messagepack 
+	$(LUAROCKS) install lua-messagepack
 
 $(COXPCALL): $(LUAROCKS)
-	$(LUAROCKS) install coxpcall 
+	$(LUAROCKS) install coxpcall
 
 $(LUAROCKS): $(LUA)
 	dir="$(DEPS_DIR)/src/luarocks"; \

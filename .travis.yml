@@ -1,18 +1,11 @@
 language: c
 
 before_install:
-  - sudo git clone --depth=1 git://github.com/neovim/deps /opt/neovim-deps
-  - sudo chown -R $(id -u) /opt/neovim-deps
-  - git clone --depth=1 git://github.com/neovim/neovim neovim
-
-install:
-  - export deps_dir="/opt/neovim-deps/64"
-  - export prefix="$deps_dir/usr"
-  - eval $($prefix/bin/luarocks path)
-  - export PATH="$(pwd)/neovim/build/bin:$prefix/bin:$PATH"
-  - export PKG_CONFIG_PATH="$prefix/lib/pkgconfig"
-  - export USE_BUNDLED_DEPS=OFF
-  - make -C neovim
+  - eval "$(curl -Ss https://raw.githubusercontent.com/neovim/bot-ci/master/scripts/travis-setup.sh) deps-x64"
+  - eval "$(curl -Ss https://raw.githubusercontent.com/neovim/bot-ci/master/scripts/travis-setup.sh) nightly-x64"
 
 script:
-  - make DEPS_DIR="$deps_dir" DEPS_INCLUDE_FLAGS="-I$prefix/include -I$prefix/include/luajit-2.0" LUA="$prefix/bin/luajit" test
+  - DEPS_PREFIX=${NVIM_DEPS_PREFIX}
+    DEPS_INCLUDE_FLAGS="-I${NVIM_DEPS_PREFIX}/include -I${NVIM_DEPS_PREFIX}/include/luajit-2.0"
+    LUA=${NVIM_DEPS_PREFIX}/bin/luajit
+    make test

@@ -141,6 +141,7 @@ static int loop_exit(lua_State *L) {
     return 0;
   }
 
+
   uv->exited = true;
 
   if (uv->data_cb != LUA_REFNIL) {
@@ -300,6 +301,8 @@ static int loop_run(lua_State *L) {
 static int loop_stop(lua_State *L) {
   UV *uv = checkuv(L);
   uv_stop(&uv->loop);
+  uv_prepare_stop(&uv->prepare);
+  uv_timer_stop(&uv->timer);
   return 0;
 }
 

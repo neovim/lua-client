@@ -4,6 +4,9 @@ before_install:
   - eval "$(curl -Ss https://raw.githubusercontent.com/neovim/bot-ci/master/scripts/travis-setup.sh) deps-x64"
   - eval "$(curl -Ss https://raw.githubusercontent.com/neovim/bot-ci/master/scripts/travis-setup.sh) nightly-x64"
 
+install:
+  - sudo ${NVIM_DEPS_PREFIX}/bin/luarocks remove nvim-client
+
 script:
   - DEPS_PREFIX=${NVIM_DEPS_PREFIX}
     DEPS_INCLUDE_FLAGS="-I${NVIM_DEPS_PREFIX}/include -I${NVIM_DEPS_PREFIX}/include/luajit-2.0"

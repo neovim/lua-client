@@ -22,7 +22,23 @@ typedef struct {
   uv_process_options_t process_options;
   uv_stdio_container_t stdio[3];
   uv_pipe_t in, out;
+  uv_prepare_t prepare;
+  uv_timer_t timer;
+  uint32_t timeout;
 } UV;
+
+static void timer_cb(uv_timer_t *handle)
+{
+  UV *uv = handle->data;
+  uv_stop(&uv->loop);
+}
+
+static void prepare_cb(uv_prepare_t *handle)
+{
+  UV *uv = handle->data;
+  uv_timer_start(&uv->timer, timer_cb, uv->timeout, 0);
+  uv_prepare_stop(handle);
+}
 
 static void walk_cb(uv_handle_t *handle, void *arg) {
   UNUSED(arg);
@@ -107,7 +123,12 @@ static int loop_new(lua_State *L) {
   uv->reading = false;
   uv->exited = false;
   uv->data_cb = LUA_REFNIL;
+  uv->timeout = 0;
   uv_loop_init(&uv->loop);
+  uv_prepare_init(&uv->loop, &uv->prepare);
+  uv_timer_init(&uv->loop, &uv->timer);
+  uv->prepare.data = uv;
+  uv->timer.data = uv;
   luaL_getmetatable(L, META_NAME);
   lua_setmetatable(L, -2);
   return 1;
@@ -255,6 +276,17 @@ static int loop_run(lua_State *L) {
   }
 
   luaL_checktype(L, 2, LUA_TFUNCTION);
+  uv->timeout = 0;
+
+  if (!lua_isnone(L, 3)) {
+    int timeout = luaL_checkint(L, 3);
+    if (timeout < 0) {
+      luaL_error(L, "Timeout argument must be a positive integer");
+    }
+    uv->timeout = (uint32_t)timeout;
+    uv_prepare_start(&uv->prepare, prepare_cb);
+  }
+
   /* Store the data callback on the registry and save the reference */
   uv->data_cb = luaL_ref(L, LUA_REGISTRYINDEX);
   uv_read_start((uv_stream_t *)&uv->out, alloc_cb, read_cb);

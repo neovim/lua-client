@@ -36,6 +36,12 @@ describe('loop functions', function()
       assert.has.error(function() loop:run(function() end) end)
       assert.has.error(function() loop:run(function() end) end)
     end)
+
+    it('accepts a timeout argument', function()
+      loop:spawn({'sh', '-c', 'sleep 5000'})
+      loop:run(function() end, 50)
+      loop:exit()
+    end)
   end)
   
   describe('reading/writing', function()

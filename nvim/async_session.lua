@@ -35,7 +35,7 @@ function AsyncSession:request(method, args, response_cb)
   self._pending_requests[request_id] = response_cb
 end
 
-function AsyncSession:run(request_cb, notification_cb)
+function AsyncSession:run(request_cb, notification_cb, timeout)
   self._msgpack_stream:run(function(msg)
     local msg_type = msg[1]
     if msg_type == 0 then
@@ -61,12 +61,15 @@ function AsyncSession:run(request_cb, notification_cb)
     else
       self._msgpack_stream:send({1, 0, 'Invalid message type', nil})
     end
-  end)
+  end, timeout)
 end
 
 function AsyncSession:stop()
   self._msgpack_stream:stop()
 end
 
+function AsyncSession:exit()
+  self._msgpack_stream:exit()
+end
 
 return AsyncSession

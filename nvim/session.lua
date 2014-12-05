@@ -47,7 +47,7 @@ function Session.new(async_session)
   }, Session)
 end
 
-function Session:next_message()
+function Session:next_message(timeout)
   local function on_request(method, args, response)
     table.insert(self._pending_messages, {'request', method, args, response})
     self._async_session:stop()
@@ -66,7 +66,7 @@ function Session:next_message()
     return table.remove(self._pending_messages, 1)
   end
 
-  self._async_session:run(on_request, on_notification)
+  self._async_session:run(on_request, on_notification, timeout)
   return table.remove(self._pending_messages, 1)
 end
 
@@ -86,7 +86,7 @@ function Session:request(method, ...)
   return true, result
 end
 
-function Session:run(request_cb, notification_cb, setup_cb)
+function Session:run(request_cb, notification_cb, setup_cb, timeout)
   local function on_request(method, args, response)
     coroutine_exec(request_cb, method, args, function(status, result)
       if status then
@@ -116,12 +116,16 @@ function Session:run(request_cb, notification_cb, setup_cb)
     end
   end
 
-  self._async_session:run(on_request, on_notification)
+  self._async_session:run(on_request, on_notification, timeout)
   self._is_running = false
 end
 
 function Session:stop()
   self._async_session:stop()
+end
+
+function Session:exit()
+  self._async_session:exit()
 end
 
 function Session:_yielding_request(method, args)

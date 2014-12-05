@@ -141,7 +141,6 @@ static int loop_exit(lua_State *L) {
     return 0;
   }
 
-
   uv->exited = true;
 
   if (uv->data_cb != LUA_REFNIL) {
@@ -293,6 +292,8 @@ static int loop_run(lua_State *L) {
   uv_read_start((uv_stream_t *)&uv->out, alloc_cb, read_cb);
   uv_run(&uv->loop, UV_RUN_DEFAULT);
   uv_read_stop((uv_stream_t *)&uv->out);
+  uv_prepare_stop(&uv->prepare);
+  uv_timer_stop(&uv->timer);
   luaL_unref(L, LUA_REGISTRYINDEX, uv->data_cb);
   uv->data_cb = LUA_REFNIL;
   return 0;
@@ -301,8 +302,6 @@ static int loop_run(lua_State *L) {
 static int loop_stop(lua_State *L) {
   UV *uv = checkuv(L);
   uv_stop(&uv->loop);
-  uv_prepare_stop(&uv->prepare);
-  uv_timer_stop(&uv->timer);
   return 0;
 }
 

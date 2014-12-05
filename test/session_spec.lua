@@ -5,9 +5,10 @@ local Session = require('nvim.session')
 
 
 describe('Session', function()
-  local loop, msgpack_stream, async_session, session
+  local loop, msgpack_stream, async_session, session, exited
 
   before_each(function()
+    exited = false
     loop = Loop.new()
     msgpack_stream = MsgpackStream.new(loop)
     async_session = AsyncSession.new(msgpack_stream)
@@ -16,7 +17,9 @@ describe('Session', function()
   end)
 
   after_each(function()
-    session:request('vim_command', 'qa!')
+    if not exited then
+      session:request('vim_command', 'qa!')
+    end
   end)
 
   it('can make requests to nvim', function()
@@ -93,5 +96,16 @@ describe('Session', function()
       'rpcrequest(1, "method", 1, 2')
     assert.is_false(status)
     assert.are.equal('Failed to evaluate expression', result[2])
+  end)
+
+  it('can break out of event loop with a timeout', function()
+    local responded = false
+    session:run(nil, nil, function()
+      session:request('vim_command' , 'sleep 5')
+      responded = true
+    end, 50)
+    assert.is_false(responded)
+    session:exit()
+    exited = true
   end)
 end)

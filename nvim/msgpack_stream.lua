@@ -46,8 +46,8 @@ function MsgpackStream:send(msg)
   self._loop:send(msgpack.pack(msg))
 end
 
-function MsgpackStream:run(message_cb)
-  self._loop:run(function(data)
+function MsgpackStream:run(message_cb, timeout)
+  local cb = function(data)
     self._data = self._data .. data
     while true do
       local ok, msg, pos = copcall(munpack, self._data)
@@ -57,12 +57,20 @@ function MsgpackStream:run(message_cb)
       self._data = self._data:sub(pos)
       message_cb(msg)
     end
-  end)
+  end
+  local args = {cb}
+  if timeout then
+    args[#args + 1] = timeout
+  end
+  self._loop:run(unpack(args))
 end
 
 function MsgpackStream:stop()
   self._loop:stop()
 end
 
+function MsgpackStream:exit()
+  self._loop:exit()
+end
 
 return MsgpackStream

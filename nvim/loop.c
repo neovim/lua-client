@@ -285,6 +285,7 @@ static int loop_run(lua_State *L) {
     }
     uv->timeout = (uint32_t)timeout;
     uv_prepare_start(&uv->prepare, prepare_cb);
+    lua_pop(L, 1);
   }
 
   /* Store the data callback on the registry and save the reference */

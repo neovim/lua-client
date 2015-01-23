@@ -1,8 +1,8 @@
 package = 'nvim-client'
-version = '0.0.1-7'
+version = '0.0.1-8'
 source = {
   url = 'git://github.com/neovim/lua-client',
-  tag = '0.0.1-7'
+  tag = '0.0.1-8'
 }
 description = {
   summary = "Lua client to Nvim",

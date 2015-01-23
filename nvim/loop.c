@@ -137,7 +137,7 @@ static int loop_new(lua_State *L) {
 }
 
 static int loop_exit(lua_State *L) {
-  int status, count;
+  int status;
   UV *uv = checkuv(L);
 
   if (uv->exited || !uv->connected) {
@@ -150,6 +150,10 @@ static int loop_exit(lua_State *L) {
     luaL_error(L, "This should only be called after stopping the loop");
   }
 
+  if (!lua_isnone(L, 2)) {
+    uv_process_kill(&uv->process, luaL_checkint(L, 2) ? SIGKILL : SIGTERM);
+  }
+
   /* Call uv_close on every active handle */
   uv_walk(&uv->loop, walk_cb, uv);
   /* Run the event loop until all handles are successfully closed */
@@ -159,11 +163,8 @@ static int loop_exit(lua_State *L) {
 
   /* Work around libuv bug that leaves defunct children:
    * https://github.com/libuv/libuv/issues/154 */
-  count = 0;
   while (!uv_process_kill(&uv->process, 0)) {
     waitpid(uv->process.pid, &status, WNOHANG);
-    /* After 5 tries, send SIGKILL */
-    uv_process_kill(&uv->process, count++ < 5 ? SIGTERM : SIGKILL);
   }
 
   return 0;

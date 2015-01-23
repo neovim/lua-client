@@ -40,7 +40,7 @@ describe('loop functions', function()
     it('accepts a timeout argument', function()
       loop:spawn({'sh', '-c', 'sleep 5000'})
       loop:run(function() end, 50)
-      loop:exit()
+      loop:exit(0)
     end)
   end)
   

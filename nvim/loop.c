@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include <sys/wait.h>
+
 #include <lua.h>
 #include <lauxlib.h>
 #include <uv.h>
@@ -135,6 +137,7 @@ static int loop_new(lua_State *L) {
 }
 
 static int loop_exit(lua_State *L) {
+  int status;
   UV *uv = checkuv(L);
 
   if (uv->exited) {
@@ -152,6 +155,12 @@ static int loop_exit(lua_State *L) {
   /* Run the event loop until all handles are successfully closed */
   while (uv_loop_close(&uv->loop)) {
     uv_run(&uv->loop, UV_RUN_DEFAULT);
+  }
+
+  /* Work around libuv bug that leaves defunct children:
+   * https://github.com/libuv/libuv/issues/154 */
+  while (!uv_process_kill(&uv->process, 0)) {
+    waitpid(uv->process.pid, &status, WNOHANG);
   }
 
   return 0;

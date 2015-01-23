@@ -137,10 +137,10 @@ static int loop_new(lua_State *L) {
 }
 
 static int loop_exit(lua_State *L) {
-  int status;
+  int status, count;
   UV *uv = checkuv(L);
 
-  if (uv->exited) {
+  if (uv->exited || !uv->connected) {
     return 0;
   }
 
@@ -159,8 +159,11 @@ static int loop_exit(lua_State *L) {
 
   /* Work around libuv bug that leaves defunct children:
    * https://github.com/libuv/libuv/issues/154 */
+  count = 0;
   while (!uv_process_kill(&uv->process, 0)) {
     waitpid(uv->process.pid, &status, WNOHANG);
+    /* After 5 tries, send SIGKILL */
+    uv_process_kill(&uv->process, count++ < 5 ? SIGTERM : SIGKILL);
   }
 
   return 0;

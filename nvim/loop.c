@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <string.h>
 
 #include <sys/wait.h>
@@ -319,6 +320,23 @@ static int loop_stop(lua_State *L) {
   return 0;
 }
 
+static int tb_panic(lua_State *L)
+{
+  /* same as the default panic function, but also print the lua traceback */
+  const char *s = lua_tostring(L, -1);
+  fputs("PANIC: unprotected error in call to Lua API (", stderr);
+  fputs(s ? s : "?", stderr);
+  fputc(')', stderr); fputc('\n', stderr);
+  lua_getfield(L, LUA_GLOBALSINDEX, "debug");
+  lua_getfield(L, -1, "traceback");
+  lua_pushvalue(L, 1);
+  lua_pushinteger(L, 2);
+  lua_call(L, 2, 1);
+  fputs(lua_tostring(L, -1), stderr);
+  fflush(stderr);
+  return 0;
+}
+
 static const luaL_reg looplib_m[] = {
   {"__gc", loop_delete},
   {"run", loop_run},
@@ -334,6 +352,7 @@ static const luaL_reg looplib_f[] = {
   {NULL, NULL}
 };
 
+
 int luaopen_nvim_loop(lua_State *L) {
   luaL_newmetatable(L, META_NAME);
   lua_pushstring(L, "__index");
@@ -345,5 +364,6 @@ int luaopen_nvim_loop(lua_State *L) {
   luaL_register(L, NULL, looplib_m);
   lua_newtable(L);
   luaL_register(L, NULL, looplib_f);
+  lua_atpanic(L, tb_panic);
   return 1;
 }

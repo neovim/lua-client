@@ -53,6 +53,7 @@ build = {
   platforms = {
     linux = make_plat('linux'),
     macosx = make_plat('macosx'),
-    freebsd = make_plat('freebsd')
-  }
+    freebsd = make_plat('freebsd'),
+    solaris = make_plat('solaris')
+    }
 }

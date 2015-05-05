@@ -1,11 +1,11 @@
 package = 'nvim-client'
 version = '0.0.1-11'
 source = {
-  url = 'git://github.com/neovim/lua-client',
-  tag = '0.0.1-11'
+  url = 'https://github.com/neovim/lua-client/archive/' .. version .. '.tar.gz',
+  dir = 'lua-client-' .. version,
 }
 description = {
-  summary = "Lua client to Nvim",
+  summary = 'Lua client to Nvim',
   license = 'Apache'
 }
 dependencies = {
@@ -15,7 +15,7 @@ dependencies = {
 }
 external_dependencies = {
   LIBUV = {
-    header = "uv.h"
+    header = 'uv.h'
   }
 }
 
@@ -56,5 +56,5 @@ build = {
     freebsd = make_plat('freebsd'),
     openbsd = make_plat('openbsd'),
     solaris = make_plat('solaris')
-    }
+  }
 }

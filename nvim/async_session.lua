@@ -35,6 +35,10 @@ function AsyncSession:request(method, args, response_cb)
   self._pending_requests[request_id] = response_cb
 end
 
+function AsyncSession:notify(method, args, response_cb)
+  self._msgpack_stream:send({2, method, args})
+end
+
 function AsyncSession:run(request_cb, notification_cb, timeout)
   self._msgpack_stream:run(function(msg)
     local msg_type = msg[1]

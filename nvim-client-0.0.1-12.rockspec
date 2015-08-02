@@ -50,12 +50,4 @@ end
 
 build = {
   type = 'builtin',
-  platforms = {
-    linux = make_plat('linux'),
-    macosx = make_plat('macosx'),
-    freebsd = make_plat('freebsd'),
-    netbsd = make_plat('netbsd'),
-    openbsd = make_plat('openbsd'),
-    solaris = make_plat('solaris')
-  }
 }

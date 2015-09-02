@@ -4,6 +4,8 @@ language: c
 env:
   global:
     - DEPS_INSTALL_PREFIX="${TRAVIS_BUILD_DIR}/.deps"
+    - NVIM_INSTALL_PREFIX="${DEPS_INSTALL_PREFIX}/nvim"
+    - NVIM_PROG="${NVIM_INSTALL_PREFIX}/bin/nvim"
     # Travis has 1.5 virtual cores.
     # http://docs.travis-ci.com/user/speeding-up-the-build/#Paralellizing-your-build-on-one-VM
     - MAKE_CMD="make -j2"
@@ -18,11 +20,6 @@ env:
     # successful, but don't have this information available in before_cache
     # (which is run before after_success).
     - SUCCESS_MARKER="$TRAVIS_BUILD_DIR/.tests_successful"
-
-before_install:
-  - git clone --depth=50 https://github.com/neovim/deps.git
-# - eval "$(curl -Ss https://raw.githubusercontent.com/neovim/bot-ci/master/scripts/travis-setup.sh) deps-x64"
-# - eval "$(curl -Ss https://raw.githubusercontent.com/neovim/bot-ci/master/scripts/travis-setup.sh) nightly-x64"
 
 script:         .ci/script.sh
 before_cache:   .ci/before_cache.sh

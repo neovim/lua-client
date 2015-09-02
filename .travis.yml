@@ -1,14 +1,48 @@
+sudo: false
 language: c
 
+env:
+  global:
+    - DEPS_INSTALL_PREFIX="${TRAVIS_BUILD_DIR}/.deps"
+    # Travis has 1.5 virtual cores.
+    # http://docs.travis-ci.com/user/speeding-up-the-build/#Paralellizing-your-build-on-one-VM
+    - MAKE_CMD="make -j2"
+    - DEPS_PREFIX=${DEPS_INSTALL_PREFIX}
+    - DEPS_INCLUDE_FLAGS="-I${DEPS_INSTALL_PREFIX}/include -I${DEPS_INSTALL_PREFIX}/include/luajit-2.0"
+    - LUA=${DEPS_INSTALL_PREFIX}/bin/luajit
+    # Cache marker for dependencies cache: indicates that the cache exists
+    # and has pre-built dependencies.
+    - CACHE_MARKER="$HOME/.cache/nvim-deps/.travis_cache_marker"
+    # Test success marker: indicates that all tests were successful.
+    # Required because we only want to update the cache if the tests were
+    # successful, but don't have this information available in before_cache
+    # (which is run before after_success).
+    - SUCCESS_MARKER="$TRAVIS_BUILD_DIR/.tests_successful"
+
 before_install:
-  - eval "$(curl -Ss https://raw.githubusercontent.com/neovim/bot-ci/master/scripts/travis-setup.sh) deps-x64"
-  - eval "$(curl -Ss https://raw.githubusercontent.com/neovim/bot-ci/master/scripts/travis-setup.sh) nightly-x64"
+  - git clone --depth=50 https://github.com/neovim/deps.git
+# - eval "$(curl -Ss https://raw.githubusercontent.com/neovim/bot-ci/master/scripts/travis-setup.sh) deps-x64"
+# - eval "$(curl -Ss https://raw.githubusercontent.com/neovim/bot-ci/master/scripts/travis-setup.sh) nightly-x64"
 
-install:
-  - sudo ${NVIM_DEPS_PREFIX}/bin/luarocks remove nvim-client
+script:         .ci/script.sh
+before_cache:   .ci/before_cache.sh
 
-script:
-  - DEPS_PREFIX=${NVIM_DEPS_PREFIX}
-    DEPS_INCLUDE_FLAGS="-I${NVIM_DEPS_PREFIX}/include -I${NVIM_DEPS_PREFIX}/include/luajit-2.0"
-    LUA=${NVIM_DEPS_PREFIX}/bin/luajit
-    make test
+cache:
+  apt: true
+  directories:
+    - "$HOME/.cache/pip"
+    - "$HOME/.cache/nvim-deps"
+
+addons:
+  apt:
+    sources:
+      - llvm-toolchain-precise-3.6
+      - ubuntu-toolchain-r-test
+    packages:
+      - autoconf
+      - automake
+      - build-essential
+      - cmake
+      - gdb
+      - libtool
+      - pkg-config

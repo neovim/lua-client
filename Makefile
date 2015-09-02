@@ -27,8 +27,7 @@ COXPCALL ?= $(DEPS_PREFIX)/lib/luarocks/rocks/coxpcall
 # Libuv configuration
 LIBUV_URL ?= https://github.com/libuv/libuv/archive/v0.11.29.tar.gz
 LIBUV ?= $(DEPS_PREFIX)/lib/libuv.a
-LIBUV_LINK_FLAGS = $(shell PKG_CONFIG_PATH='$(DEPS_PREFIX)/lib/pkgconfig'\
-									 pkg-config libuv --libs)
+LIBUV_LINK_FLAGS = $(shell PKG_CONFIG_PATH='$(DEPS_PREFIX)/lib/pkgconfig' pkg-config libuv --libs)
 
 # Compilation
 CC ?= gcc
@@ -52,7 +51,7 @@ all: deps nvim/loop.so
 deps: | $(LIBUV) $(MSGPACK) $(COXPCALL) $(BUSTED)
 
 test: all
-	$(BUSTED) '--lpath=./nvim/?.lua;' '--cpath=./nvim/?.so;' test
+	$(BUSTED) -v '--lpath=./nvim/?.lua;' '--cpath=./nvim/?.so;' -o gtest test
 
 valgrind: all
 	eval $$($(LUAROCKS) path); \

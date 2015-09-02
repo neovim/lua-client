@@ -10,7 +10,7 @@ describe('AsyncSession', function()
     loop = Loop.new()
     msgpack_stream = MsgpackStream.new(loop)
     async_session = AsyncSession.new(msgpack_stream)
-    loop:spawn({'nvim', '-u', 'NONE', '--embed'})
+    loop:spawn({'.deps/nvim/nvim', '-u', 'NONE', '--embed'})
   end)
 
   after_each(function()

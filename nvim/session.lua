@@ -70,6 +70,10 @@ function Session:next_message(timeout)
   return table.remove(self._pending_messages, 1)
 end
 
+function Session:notify(method, ...)
+  self._async_session:notify(method, {...})
+end
+
 function Session:request(method, ...)
   local args = {...}
   local err, result

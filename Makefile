@@ -25,7 +25,7 @@ MSGPACK ?= $(DEPS_PREFIX)/lib/luarocks/rocks/lua-messagepack
 COXPCALL ?= $(DEPS_PREFIX)/lib/luarocks/rocks/coxpcall
 
 # Libuv configuration
-LIBUV_URL ?= https://github.com/libuv/libuv/archive/v0.11.29.tar.gz
+LIBUV_URL ?= https://github.com/libuv/libuv/archive/v1.7.3.tar.gz
 LIBUV ?= $(DEPS_PREFIX)/lib/libuv.a
 LIBUV_LINK_FLAGS = $(shell PKG_CONFIG_PATH='$(DEPS_PREFIX)/lib/pkgconfig'\
 									 pkg-config libuv --libs)
@@ -94,7 +94,7 @@ $(LUA):
 	dir="$(DEPS_DIR)/src/lua"; \
 	mkdir -p $$dir && cd $$dir && \
 	$(FETCH) $(LUA_URL) | $(UNTGZ) && \
-	sed -i src/Makefile -e '/^CFLAGS/s/-O2/-g/' && \
+	sed -i -e '/^CFLAGS/s/-O2/-g/' src/Makefile && \
 	make $(LUA_TARGET) install INSTALL_TOP=$(DEPS_PREFIX)
 
 $(LIBUV):

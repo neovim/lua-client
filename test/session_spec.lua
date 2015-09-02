@@ -3,6 +3,7 @@ local MsgpackStream = require('nvim.msgpack_stream')
 local AsyncSession = require('nvim.async_session')
 local Session = require('nvim.session')
 
+local nvim_prog = os.getenv('NVIM_PROG') or 'nvim'
 
 describe('Session', function()
   local loop, msgpack_stream, async_session, session, exited
@@ -13,7 +14,7 @@ describe('Session', function()
     msgpack_stream = MsgpackStream.new(loop)
     async_session = AsyncSession.new(msgpack_stream)
     session = Session.new(async_session)
-    loop:spawn({'nvim', '-u', 'NONE', '--embed'})
+    loop:spawn({nvim_prog, '-u', 'NONE', '--embed'})
   end)
 
   after_each(function()

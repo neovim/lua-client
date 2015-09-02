@@ -94,7 +94,7 @@ $(LUA):
 	dir="$(DEPS_DIR)/src/lua"; \
 	mkdir -p $$dir && cd $$dir && \
 	$(FETCH) $(LUA_URL) | $(UNTGZ) && \
-	sed -i src/Makefile -e '/^CFLAGS/s/-O2/-g/' && \
+	sed -i -e '/^CFLAGS/s/-O2/-g/' src/Makefile && \
 	make $(LUA_TARGET) install INSTALL_TOP=$(DEPS_PREFIX)
 
 $(LIBUV):

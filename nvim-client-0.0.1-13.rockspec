@@ -19,10 +19,27 @@ external_dependencies = {
   }
 }
 
+local function make_modules()
+  return {
+    ['nvim.msgpack_stream'] = 'nvim/msgpack_stream.lua',
+    ['nvim.async_session'] = 'nvim/async_session.lua',
+    ['nvim.session'] = 'nvim/session.lua',
+    ['nvim.loop'] = {
+      sources = {'nvim/loop.c'},
+      incdirs = {"$(LIBUV_INCDIR)"},
+      libdirs = {"$(LIBUV_LIBDIR)"}
+    }
+  }
+end
+
+local function make_libs()
+  return {'uv', 'pthread'}
+end
+
 -- based on:
 -- https://github.com/diegonehab/luasocket/blob/master/luasocket-scm-0.rockspec
 local function make_plat(plat)
-  local libs = {'uv', 'pthread'}
+  local libs = make_libs()
 
   if plat == 'freebsd' then
     libs[#libs + 1] = 'kvm'
@@ -33,21 +50,21 @@ local function make_plat(plat)
     libs[#libs + 1] = 'dl'
   end
 
-  local modules = {
-    ['nvim.msgpack_stream'] = 'nvim/msgpack_stream.lua',
-    ['nvim.async_session'] = 'nvim/async_session.lua',
-    ['nvim.session'] = 'nvim/session.lua',
-    ['nvim.loop'] = {
-      sources = {'nvim/loop.c'},
-      libraries = libs,
-      incdirs = {"$(LIBUV_INCDIR)"},
-      libdirs = {"$(LIBUV_LIBDIR)"}
-    }
+  return {
+    libraries = libs,
   }
-
-  return {modules = modules}
 end
 
 build = {
   type = 'builtin',
+  -- default (platform-agnostic) configuration
+  libraries = make_libs(),
+  modules = make_modules(),
+
+  -- per-platform overrides
+  -- https://github.com/keplerproject/luarocks/wiki/Platform-agnostic-external-dependencies
+  platforms = {
+    linux = make_plat('linux'),
+    freebsd = make_plat('freebsd')
+  }
 }

@@ -26,20 +26,18 @@ local function make_modules()
     ['nvim.session'] = 'nvim/session.lua',
     ['nvim.loop'] = {
       sources = {'nvim/loop.c'},
+      libraries = {'uv', 'pthread'},
       incdirs = {"$(LIBUV_INCDIR)"},
       libdirs = {"$(LIBUV_LIBDIR)"}
     }
   }
 end
 
-local function make_libs()
-  return {'uv', 'pthread'}
-end
-
 -- based on:
 -- https://github.com/diegonehab/luasocket/blob/master/luasocket-scm-0.rockspec
 local function make_plat(plat)
-  local libs = make_libs()
+  local modules = make_modules()
+  local libs = modules.libraries
 
   if plat == 'freebsd' then
     libs[#libs + 1] = 'kvm'
@@ -50,15 +48,12 @@ local function make_plat(plat)
     libs[#libs + 1] = 'dl'
   end
 
-  return {
-    libraries = libs,
-  }
+  return { modules = modules }
 end
 
 build = {
   type = 'builtin',
   -- default (platform-agnostic) configuration
-  libraries = make_libs(),
   modules = make_modules(),
 
   -- per-platform overrides

@@ -37,7 +37,7 @@ end
 -- https://github.com/diegonehab/luasocket/blob/master/luasocket-scm-0.rockspec
 local function make_plat(plat)
   local modules = make_modules()
-  local libs = modules.libraries
+  local libs = modules['nvim.loop'].libraries
 
   if plat == 'freebsd' then
     libs[#libs + 1] = 'kvm'

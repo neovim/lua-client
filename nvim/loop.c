@@ -233,15 +233,15 @@ static int loop_spawn(lua_State *L) {
   opts->cwd = NULL;
   opts->env = NULL;
 
-  uv_pipe_init(&uv->loop, &uv->in, 0);
-  uv->transport.child.stdio[0].flags = UV_CREATE_PIPE | UV_READABLE_PIPE;
-  uv->transport.child.stdio[0].data.stream = (uv_stream_t *)&uv->in;
-  uv->in.data = uv;
-
   uv_pipe_init(&uv->loop, &uv->out, 0);
-  uv->transport.child.stdio[1].flags = UV_CREATE_PIPE | UV_WRITABLE_PIPE;
-  uv->transport.child.stdio[1].data.stream = (uv_stream_t *)&uv->out;
+  uv->transport.child.stdio[0].flags = UV_CREATE_PIPE | UV_READABLE_PIPE;
+  uv->transport.child.stdio[0].data.stream = (uv_stream_t *)&uv->out;
   uv->out.data = uv;
+
+  uv_pipe_init(&uv->loop, &uv->in, 0);
+  uv->transport.child.stdio[1].flags = UV_CREATE_PIPE | UV_WRITABLE_PIPE;
+  uv->transport.child.stdio[1].data.stream = (uv_stream_t *)&uv->in;
+  uv->in.data = uv;
 
   uv->transport.child.stdio[2].flags = UV_IGNORE;
   uv->transport.child.stdio[2].data.fd = 2;
@@ -275,7 +275,7 @@ static int loop_send(lua_State *L) {
   data = luaL_checklstring(L, 2, &buf.len);
   req = malloc(sizeof(uv_write_t));
   req->data = buf.base = memcpy(malloc(buf.len), data, buf.len);
-  status = uv_write(req, (uv_stream_t *)&uv->in, &buf, 1, write_cb);
+  status = uv_write(req, (uv_stream_t *)&uv->out, &buf, 1, write_cb);
 
   if (status) {
     uv->error = uv_strerror(status);
@@ -317,9 +317,9 @@ static int loop_run(lua_State *L) {
 
   /* Store the data callback on the registry and save the reference */
   uv->data_cb = luaL_ref(L, LUA_REGISTRYINDEX);
-  uv_read_start((uv_stream_t *)&uv->out, alloc_cb, read_cb);
+  uv_read_start((uv_stream_t *)&uv->in, alloc_cb, read_cb);
   uv_run(&uv->loop, UV_RUN_DEFAULT);
-  uv_read_stop((uv_stream_t *)&uv->out);
+  uv_read_stop((uv_stream_t *)&uv->in);
   uv_prepare_stop(&uv->prepare);
   uv_timer_stop(&uv->timer);
   luaL_unref(L, LUA_REGISTRYINDEX, uv->data_cb);

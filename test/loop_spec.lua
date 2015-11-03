@@ -1,5 +1,10 @@
 local Loop = require('nvim.loop')
 
+-- get the path to the lua interpreter, taken from
+-- http://stackoverflow.com/a/18304231
+local i_min = 0
+while arg[ i_min ] do i_min = i_min - 1 end
+i_min = i_min + 1
 
 describe('loop functions', function()
   local loop
@@ -27,6 +32,19 @@ describe('loop functions', function()
     end)
   end)
 
+  describe('stdio', function()
+    it('sends and receive data through stdout/stdin', function()
+      loop:spawn({arg[i_min], 'test/stdio_fixture.lua'})
+      local received = ''
+      loop:send('\000\001\002\000\003')
+      loop:run(function(data)
+        received = received .. data
+        loop:stop()
+      end)
+      assert.are.same('received:\000\001\002\000\003', received)
+    end)
+  end)
+  
   describe('run', function()
     it('cannot start after the process has exited', function()
       loop:spawn({'true'})

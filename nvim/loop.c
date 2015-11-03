@@ -15,6 +15,7 @@
 #define UNUSED(x) ((void)x)
 
 typedef enum {
+  TransportTypeStdio,
   TransportTypeChild
 } TransportType;
 
@@ -187,6 +188,36 @@ static int loop_delete(lua_State *L) {
   return loop_exit(L);
 }
 
+static int loop_stdio(lua_State *L) {
+  int status;
+  const char *error = NULL;
+  UV *uv = checkuv(L);
+  luaL_argcheck(L, !uv->connected, 1, "Loop already connected");
+
+  uv_pipe_init(&uv->loop, &uv->in, 0);
+  if ((status = uv_pipe_open(&uv->in, 0))) {
+    error = uv_strerror(status);
+    goto end;
+  }
+  uv->in.data = uv;
+
+  uv_pipe_init(&uv->loop, &uv->out, 0);
+  if ((status = uv_pipe_open(&uv->out, 1))) {
+    error = uv_strerror(status);
+    goto end;
+  }
+  uv->out.data = uv;
+
+end:
+  if (error) {
+    luaL_error(L, error);
+  } else {
+    uv->connected = true;
+    uv->transport_type = TransportTypeStdio;
+  }
+  return 0;
+}
+
 static int loop_spawn(lua_State *L) {
   int status;
   size_t i, len;
@@ -354,6 +385,7 @@ static const luaL_reg looplib_m[] = {
   {"__gc", loop_delete},
   {"run", loop_run},
   {"send", loop_send},
+  {"stdio", loop_stdio},
   {"spawn", loop_spawn},
   {"stop", loop_stop},
   {"exit", loop_exit},

@@ -14,6 +14,10 @@
 #define META_NAME "nvim.Loop"
 #define UNUSED(x) ((void)x)
 
+typedef enum {
+  TransportTypeChild
+} TransportType;
+
 typedef struct {
   lua_State *L;
   char read_buffer[0xffff];
@@ -21,13 +25,18 @@ typedef struct {
   int data_cb;
   const char *error;
   uv_loop_t loop;
-  uv_process_t process;
-  uv_process_options_t process_options;
-  uv_stdio_container_t stdio[3];
   uv_pipe_t in, out;
   uv_prepare_t prepare;
   uv_timer_t timer;
   uint32_t timeout;
+  union {
+    struct {
+      uv_process_t process;
+      uv_process_options_t process_options;
+      uv_stdio_container_t stdio[3];
+    } child;
+  } transport;
+  TransportType transport_type;
 } UV;
 
 static void timer_cb(uv_timer_t *handle)
@@ -151,8 +160,9 @@ static int loop_exit(lua_State *L) {
     luaL_error(L, "This should only be called after stopping the loop");
   }
 
-  if (!lua_isnone(L, 2)) {
-    uv_process_kill(&uv->process, luaL_checkint(L, 2) ? SIGKILL : SIGTERM);
+  if (!lua_isnone(L, 2) && uv->transport_type == TransportTypeChild) {
+    uv_process_kill(&uv->transport.child.process,
+        luaL_checkint(L, 2) ? SIGKILL : SIGTERM);
   }
 
   /* Call uv_close on every active handle */
@@ -162,10 +172,12 @@ static int loop_exit(lua_State *L) {
     uv_run(&uv->loop, UV_RUN_DEFAULT);
   }
 
-  /* Work around libuv bug that leaves defunct children:
-   * https://github.com/libuv/libuv/issues/154 */
-  while (!uv_process_kill(&uv->process, 0)) {
-    waitpid(uv->process.pid, &status, WNOHANG);
+  if (uv->transport_type == TransportTypeChild) {
+    /* Work around libuv bug that leaves defunct children:
+     * https://github.com/libuv/libuv/issues/154 */
+    while (!uv_process_kill(&uv->transport.child.process, 0)) {
+      waitpid(uv->transport.child.process.pid, &status, WNOHANG);
+    }
   }
 
   return 0;
@@ -208,13 +220,13 @@ static int loop_spawn(lua_State *L) {
     lua_pop(L, 1);
   }
 
-  proc = &uv->process;
-  opts = &uv->process_options;
+  proc = &uv->transport.child.process;
+  opts = &uv->transport.child.process_options;
 
   proc->data = uv;
   opts->file = argv[0];
   opts->args = argv;
-  opts->stdio = uv->stdio;
+  opts->stdio = uv->transport.child.stdio;
   opts->stdio_count = 3;
   opts->flags = UV_PROCESS_WINDOWS_HIDE;
   opts->exit_cb = exit_cb;
@@ -222,17 +234,17 @@ static int loop_spawn(lua_State *L) {
   opts->env = NULL;
 
   uv_pipe_init(&uv->loop, &uv->in, 0);
-  uv->stdio[0].flags = UV_CREATE_PIPE | UV_READABLE_PIPE;
-  uv->stdio[0].data.stream = (uv_stream_t *)&uv->in;
+  uv->transport.child.stdio[0].flags = UV_CREATE_PIPE | UV_READABLE_PIPE;
+  uv->transport.child.stdio[0].data.stream = (uv_stream_t *)&uv->in;
   uv->in.data = uv;
 
   uv_pipe_init(&uv->loop, &uv->out, 0);
-  uv->stdio[1].flags = UV_CREATE_PIPE | UV_WRITABLE_PIPE;
-  uv->stdio[1].data.stream = (uv_stream_t *)&uv->out;
+  uv->transport.child.stdio[1].flags = UV_CREATE_PIPE | UV_WRITABLE_PIPE;
+  uv->transport.child.stdio[1].data.stream = (uv_stream_t *)&uv->out;
   uv->out.data = uv;
 
-  uv->stdio[2].flags = UV_IGNORE;
-  uv->stdio[2].data.fd = 2;
+  uv->transport.child.stdio[2].flags = UV_IGNORE;
+  uv->transport.child.stdio[2].data.fd = 2;
 
   /* Spawn the process */
   if ((status = uv_spawn(&uv->loop, proc, opts))) {
@@ -242,6 +254,7 @@ static int loop_spawn(lua_State *L) {
 
   free(argv);
   uv->connected = true;
+  uv->transport_type = TransportTypeChild;
 
   return 0;
 

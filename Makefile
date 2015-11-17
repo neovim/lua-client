@@ -21,6 +21,7 @@ LUA_TARGET ?= linux
 LUA ?= $(DEPS_BIN)/lua
 LUAROCKS ?= $(DEPS_BIN)/luarocks
 BUSTED ?= $(DEPS_BIN)/busted
+LUV ?= $(DEPS_PREFIX)/lib/luarocks/rocks/luv
 MSGPACK ?= $(DEPS_PREFIX)/lib/luarocks/rocks/lua-messagepack
 COXPCALL ?= $(DEPS_PREFIX)/lib/luarocks/rocks/coxpcall
 
@@ -46,9 +47,9 @@ FETCH ?= curl -L -o -
 UNTGZ ?= tar xfz - --strip-components=1
 
 
-all: deps nvim/loop.so
+all: deps
 
-deps: | $(LIBUV) $(MSGPACK) $(COXPCALL) $(BUSTED)
+deps: | $(LIBUV) $(MSGPACK) $(COXPCALL) $(BUSTED) $(LUV)
 
 test: all
 	$(BUSTED) -v '--lpath=./nvim/?.lua;' '--cpath=./nvim/?.so;' -o gtest test
@@ -66,15 +67,12 @@ clean:
 distclean: clean
 	rm -rf $(DEPS_DIR)
 
-nvim/loop.o: nvim/loop.c $(LUA) $(LIBUV)
-	$(CC) $(CFLAGS) -o $@ -c $< $(DEPS_INCLUDE_FLAGS)
-
-nvim/loop.so: nvim/loop.o
-	$(CC) $(LDFLAGS) $< -o $@ $(LIBUV_LINK_FLAGS)
-
 $(BUSTED): | $(LUAROCKS)
 	$(LUAROCKS) install busted
 	$(LUAROCKS) install inspect  # helpful for debugging
+
+$(LUV): $(LUAROCKS)
+	$(LUAROCKS) install luv
 
 $(MSGPACK): $(LUAROCKS)
 	$(LUAROCKS) install lua-messagepack

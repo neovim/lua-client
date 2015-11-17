@@ -11,6 +11,7 @@ description = {
 dependencies = {
   'lua ~> 5.1',
   'lua-messagepack',
+  'luv',
   'coxpcall'
 }
 external_dependencies = {
@@ -24,12 +25,7 @@ local function make_modules()
     ['nvim.msgpack_stream'] = 'nvim/msgpack_stream.lua',
     ['nvim.async_session'] = 'nvim/async_session.lua',
     ['nvim.session'] = 'nvim/session.lua',
-    ['nvim.loop'] = {
-      sources = {'nvim/loop.c'},
-      libraries = {'uv', 'pthread'},
-      incdirs = {"$(LIBUV_INCDIR)"},
-      libdirs = {"$(LIBUV_LIBDIR)"}
-    }
+    ['nvim.loop'] = 'nvim/loop.c'
   }
 end
 

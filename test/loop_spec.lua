@@ -16,22 +16,6 @@ describe('loop functions', function()
     loop = Loop.new()
   end)
 
-  describe('spawn', function()
-    describe('with first argument that is not Loop instance', function()
-      it('raises an error', function()
-        assert.has.error(function() loop.spawn(1) end)
-      end)
-    end) 
-
-    describe('with second argument that is not a string array', function()
-      it('raises an error', function()
-        assert.has.error(function() loop:spawn({}) end)
-        assert.has.error(function() loop:spawn(1) end)
-        assert.has.error(function() loop:spawn({1}) end)
-      end)
-    end)
-  end)
-
   describe('stdio', function()
     it('sends and receive data through stdout/stdin', function()
       loop:spawn({arg[i_min], 'test/stdio_fixture.lua'})
@@ -39,9 +23,10 @@ describe('loop functions', function()
       loop:send('\000\001\002\000\003')
       loop:run(function(data)
         received = received .. data
-        loop:stop()
+        if received == 'received:\000\001\002\000\003' then
+          loop:stop()
+        end
       end)
-      assert.are.same('received:\000\001\002\000\003', received)
     end)
   end)
   

@@ -56,7 +56,7 @@ test: all
 valgrind: all
 	eval $$($(LUAROCKS) path); \
 	valgrind $(VALGRIND_OPTS) $(LUA) \
-		$(DEPS_PREFIX)/lib/luarocks/rocks/busted/2.0.rc3-0/bin/busted \
+		$(DEPS_PREFIX)/lib/luarocks/rocks/busted/2.0.rc11-0/bin/busted \
 		'--lpath=./nvim/?.lua;' '--cpath=./nvim/?.so;' test
 	cat valgrind.log
 

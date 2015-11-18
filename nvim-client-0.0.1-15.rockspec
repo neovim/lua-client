@@ -22,10 +22,11 @@ external_dependencies = {
 
 local function make_modules()
   return {
+    ['nvim.stdio_stream'] = 'nvim/stdio_stream.lua',
+    ['nvim.child_process_stream'] = 'nvim/child_process_stream.lua',
     ['nvim.msgpack_stream'] = 'nvim/msgpack_stream.lua',
-    ['nvim.async_session'] = 'nvim/async_session.lua',
-    ['nvim.session'] = 'nvim/session.lua',
-    ['nvim.loop'] = 'nvim/loop.c'
+    ['nvim.msgpack_rpc_stream'] = 'nvim/msgpack_rpc_stream.lua',
+    ['nvim.session'] = 'nvim/session.lua'
   }
 end
 

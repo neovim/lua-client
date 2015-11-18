@@ -24,18 +24,7 @@ BUSTED ?= $(DEPS_BIN)/busted
 LUV ?= $(DEPS_PREFIX)/lib/luarocks/rocks/luv
 MSGPACK ?= $(DEPS_PREFIX)/lib/luarocks/rocks/lua-messagepack
 COXPCALL ?= $(DEPS_PREFIX)/lib/luarocks/rocks/coxpcall
-
-# Libuv configuration
-LIBUV_URL ?= https://github.com/libuv/libuv/archive/v1.7.3.tar.gz
-LIBUV ?= $(DEPS_PREFIX)/lib/libuv.a
-LIBUV_LINK_FLAGS = $(shell PKG_CONFIG_PATH='$(DEPS_PREFIX)/lib/pkgconfig' pkg-config libuv --libs)
-
-# Compilation
-CC ?= gcc
-CFLAGS ?= -g -fPIC -Wall -Wextra -Werror -Wconversion -Wextra \
-	-Wstrict-prototypes -pedantic
-LDFLAGS ?= -shared -fPIC
-DEPS_INCLUDE_FLAGS ?= -I$(DEPS_PREFIX)/include
+LUAPOSIX ?= $(DEPS_PREFIX)/lib/luarocks/rocks/luaposix
 
 # Misc
 # Options used by the 'valgrind' target, which runs the tests under valgrind
@@ -49,7 +38,7 @@ UNTGZ ?= tar xfz - --strip-components=1
 
 all: deps
 
-deps: | $(LIBUV) $(MSGPACK) $(COXPCALL) $(BUSTED) $(LUV)
+deps: | $(MSGPACK) $(LUAPOSIX) $(COXPCALL) $(BUSTED) $(LUV)
 
 test: all
 	$(BUSTED) -v '--lpath=./nvim/?.lua;' '--cpath=./nvim/?.so;' -o gtest test
@@ -80,6 +69,9 @@ $(MSGPACK): $(LUAROCKS)
 $(COXPCALL): $(LUAROCKS)
 	$(LUAROCKS) install coxpcall
 
+$(LUAPOSIX): $(LUAROCKS)
+	$(LUAROCKS) install luaposix
+
 $(LUAROCKS): $(LUA)
 	dir="$(DEPS_DIR)/src/luarocks"; \
 	mkdir -p $$dir && cd $$dir && \
@@ -94,15 +86,4 @@ $(LUA):
 	sed -i -e '/^CFLAGS/s/-O2/-g/' src/Makefile && \
 	make $(LUA_TARGET) install INSTALL_TOP=$(DEPS_PREFIX)
 
-$(LIBUV):
-	dir="$(DEPS_DIR)/src/libuv"; \
-	mkdir -p $$dir && cd $$dir && \
-	$(FETCH) $(LIBUV_URL) | $(UNTGZ) && \
-	./autogen.sh && ./configure --with-pic --disable-shared \
-		--prefix=$(DEPS_PREFIX) && make install
-
-$(DEPS_DIR)/src/libuv:
-	mkdir -p $@ && cd $@ && \
-	$(FETCH) $(LIBUV_URL) | $(UNTGZ) || rm -rf $@
- 
 .PHONY: all deps test valgrind clean distclean

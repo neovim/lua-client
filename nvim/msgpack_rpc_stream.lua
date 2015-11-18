@@ -10,37 +10,43 @@ end
 
 function Response:send(value, is_error)
   if is_error then
-    self._msgpack_stream:send({1, self._request_id, value, nil})
+    self._msgpack_stream:write({1, self._request_id, value, nil})
   else
-    self._msgpack_stream:send({1, self._request_id, nil, value})
+    self._msgpack_stream:write({1, self._request_id, nil, value})
   end
 end
 
 
-local AsyncSession = {}
-AsyncSession.__index = AsyncSession
+local MsgpackRpcStream = {}
+MsgpackRpcStream.__index = MsgpackRpcStream
 
-function AsyncSession.new(msgpack_stream)
+function MsgpackRpcStream.new(msgpack_stream)
   return setmetatable({
     _msgpack_stream = msgpack_stream,
     _next_request_id = 1,
     _pending_requests = {}
-  }, AsyncSession)
+  }, MsgpackRpcStream)
 end
 
-function AsyncSession:request(method, args, response_cb)
-  local request_id = self._next_request_id
-  self._next_request_id = request_id + 1
-  self._msgpack_stream:send({0, request_id, method, args})
-  self._pending_requests[request_id] = response_cb
+function MsgpackRpcStream:write(method, args, response_cb)
+  if response_cb then
+    assert(type(response_cb) == 'function')
+    -- request
+    local request_id = self._next_request_id
+    self._next_request_id = request_id + 1
+    self._msgpack_stream:write({0, request_id, method, args})
+    self._pending_requests[request_id] = response_cb
+  else
+    -- notification
+    self._msgpack_stream:write({2, method, args})
+  end
 end
 
-function AsyncSession:notify(method, args, response_cb)
-  self._msgpack_stream:send({2, method, args})
-end
-
-function AsyncSession:run(request_cb, notification_cb, timeout)
-  self._msgpack_stream:run(function(msg)
+function MsgpackRpcStream:read_start(request_cb, notification_cb, eof_cb)
+  self._msgpack_stream:read_start(function(msg)
+    if not msg then
+      return eof_cb()
+    end
     local msg_type = msg[1]
     if msg_type == 0 then
       -- request
@@ -63,17 +69,17 @@ function AsyncSession:run(request_cb, notification_cb, timeout)
       --   - msg[3]: arguments
       notification_cb(msg[2], msg[3])
     else
-      self._msgpack_stream:send({1, 0, 'Invalid message type', nil})
+      self._msgpack_stream:write({1, 0, 'Invalid message type', nil})
     end
-  end, timeout)
+  end)
 end
 
-function AsyncSession:stop()
-  self._msgpack_stream:stop()
+function MsgpackRpcStream:read_stop()
+  self._msgpack_stream:read_stop()
 end
 
-function AsyncSession:exit()
-  self._msgpack_stream:exit()
+function MsgpackRpcStream:close()
+  self._msgpack_stream:close()
 end
 
-return AsyncSession
+return MsgpackRpcStream

@@ -35,6 +35,7 @@ addons:
     sources:
       - llvm-toolchain-precise-3.6
       - ubuntu-toolchain-r-test
+      - kalakris-cmake
     packages:
       - autoconf
       - automake

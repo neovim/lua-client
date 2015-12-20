@@ -5,7 +5,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <sys/wait.h>
+#ifndef _WIN32
+# include <sys/wait.h>
+#endif
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -173,6 +175,7 @@ static int loop_exit(lua_State *L) {
     uv_run(&uv->loop, UV_RUN_DEFAULT);
   }
 
+#ifndef _WIN32
   if (uv->transport_type == TransportTypeChild) {
     /* Work around libuv bug that leaves defunct children:
      * https://github.com/libuv/libuv/issues/154 */
@@ -180,6 +183,7 @@ static int loop_exit(lua_State *L) {
       waitpid(uv->transport.child.process.pid, &status, WNOHANG);
     }
   }
+#endif
 
   return 0;
 }

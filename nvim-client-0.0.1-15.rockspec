@@ -26,7 +26,7 @@ local function make_modules()
     ['nvim.session'] = 'nvim/session.lua',
     ['nvim.loop'] = {
       sources = {'nvim/loop.c'},
-      libraries = {'uv', 'pthread'},
+      libraries = {'uv'},
       incdirs = {"$(LIBUV_INCDIR)"},
       libdirs = {"$(LIBUV_LIBDIR)"}
     }
@@ -48,6 +48,16 @@ local function make_plat(plat)
     libs[#libs + 1] = 'dl'
   end
 
+  if plat == 'windows' then
+    libs[#libs + 1] = 'psapi'
+    libs[#libs + 1] = 'iphlpapi'
+    libs[#libs + 1] = 'userenv'
+    libs[#libs + 1] = 'ws2_32'
+    libs[#libs + 1] = 'advapi32'
+  else
+    libs[#libs + 1] = 'pthread'
+  end
+
   return { modules = modules }
 end
 
@@ -60,6 +70,7 @@ build = {
   -- https://github.com/keplerproject/luarocks/wiki/Platform-agnostic-external-dependencies
   platforms = {
     linux = make_plat('linux'),
-    freebsd = make_plat('freebsd')
+    freebsd = make_plat('freebsd'),
+    windows = make_plat('windows')
   }
 }

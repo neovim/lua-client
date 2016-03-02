@@ -1,8 +1,8 @@
 package = 'nvim-client'
 version = '0.0.1-16'
 source = {
-  url = 'https://github.com/tarruda/lua-client/archive/luv-decoupled-streams.tar.gz',
-  dir = 'lua-client-luv-decoupled-streams',
+  url = 'https://github.com/neovim/lua-client/archive/' .. version .. '.tar.gz',
+  dir = 'lua-client-' .. version,
 }
 description = {
   summary = 'Lua client to Nvim',

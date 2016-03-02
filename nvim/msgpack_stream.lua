@@ -38,16 +38,20 @@ end
 local MsgpackStream = {}
 MsgpackStream.__index = MsgpackStream
 
-function MsgpackStream.new(loop)
-  return setmetatable({_loop = loop, _data = ''}, MsgpackStream)
+function MsgpackStream.new(stream)
+  return setmetatable({_stream = stream, _data = ''}, MsgpackStream)
 end
 
-function MsgpackStream:send(msg)
-  self._loop:send(msgpack.pack(msg))
+function MsgpackStream:write(msg)
+  self._stream:write(msgpack.pack(msg))
 end
 
-function MsgpackStream:run(message_cb, timeout)
-  local cb = function(data)
+function MsgpackStream:read_start(cb)
+  self._stream:read_start(function(data)
+    if not data then
+      -- EOF
+      return cb(nil)
+    end
     self._data = self._data .. data
     while true do
       local ok, msg, pos = copcall(munpack, self._data)
@@ -55,22 +59,17 @@ function MsgpackStream:run(message_cb, timeout)
         break
       end
       self._data = self._data:sub(pos)
-      message_cb(msg)
+      cb(msg)
     end
-  end
-  local args = {cb}
-  if timeout then
-    args[#args + 1] = timeout
-  end
-  self._loop:run(unpack(args))
+  end)
 end
 
-function MsgpackStream:stop()
-  self._loop:stop()
+function MsgpackStream:read_stop()
+  self._stream:read_stop()
 end
 
-function MsgpackStream:exit()
-  self._loop:exit()
+function MsgpackStream:close()
+  self._stream:close()
 end
 
 return MsgpackStream

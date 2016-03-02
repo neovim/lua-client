@@ -1,20 +1,15 @@
-local Loop = require('nvim.loop')
-local MsgpackStream = require('nvim.msgpack_stream')
-local AsyncSession = require('nvim.async_session')
+local ChildProcessStream = require('nvim.child_process_stream')
 local Session = require('nvim.session')
 
 local nvim_prog = os.getenv('NVIM_PROG') or 'nvim'
 
 describe('Session', function()
-  local loop, msgpack_stream, async_session, session, exited
+  local proc_stream, msgpack_stream, msgpack_rpc_stream, session, exited
 
   before_each(function()
     exited = false
-    loop = Loop.new()
-    msgpack_stream = MsgpackStream.new(loop)
-    async_session = AsyncSession.new(msgpack_stream)
-    session = Session.new(async_session)
-    loop:spawn({nvim_prog, '-u', 'NONE', '--embed'})
+    proc_stream = ChildProcessStream.spawn({nvim_prog, '-u', 'NONE', '--embed'})
+    session = Session.new(proc_stream)
   end)
 
   after_each(function()
@@ -108,5 +103,25 @@ describe('Session', function()
     assert.is_false(responded)
     session:exit()
     exited = true
+  end)
+end)
+
+-- get the path to the lua interpreter, taken from
+-- http://stackoverflow.com/a/18304231
+local i_min = 0
+while arg[ i_min ] do i_min = i_min - 1 end
+i_min = i_min + 1
+
+describe('stdio', function()
+  it('sends and receive data through stdout/stdin', function()
+    local proc_stream = ChildProcessStream.spawn({
+      arg[i_min],
+      'test/stdio_fixture.lua'
+    })
+    local session = Session.new(proc_stream)
+    session:notify('a', 0, 1)
+    assert.are.same({'notification', 'b', {2, 3}}, session:next_message())
+    session:notify('c', 4, 5)
+    assert.are.same({'notification', 'd', {6, 7}}, session:next_message())
   end)
 end)

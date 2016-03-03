@@ -136,16 +136,16 @@ end
 
 function Session:exit()
   self._exited = true
-  self._timer:close()
-  self._prepare:close()
+  if not self._timer:is_closing() then self._timer:close() end
+  if not self._prepare:is_closing() then self._prepare:close() end
   self._msgpack_rpc_stream:close()
+  uv.run('nowait')
   local pid = self._msgpack_rpc_stream._msgpack_stream._stream._pid
   if pid == nil then
     return  -- not a child stream
   end
   -- Work around libuv bug that leaves defunct children:
   -- https://github.com/libuv/libuv/issues/154 
-  uv.run('nowait')
   while kill(pid, 0) == 0 do
     -- wait.wait(pid, wait.WNOHANG)
     wait.wait(pid, wait.WNOHANG)

@@ -1,0 +1,35 @@
+#define LUA_LIB
+#include <lua.h>
+#include <lauxlib.h>
+
+#define UNUSED(x) ((void)x)
+
+#ifdef _WIN32
+static int pid_wait(lua_State *L) {
+  (void)(L);
+  return 0;
+}
+#else
+#include <sys/wait.h>
+#include <signal.h>
+
+static int pid_wait(lua_State *L) {
+  int status;
+  pid_t pid = luaL_checkint(L, 1);
+  /* Work around libuv bug that leaves defunct children:
+   * https://github.com/libuv/libuv/issues/154 */
+  while (!kill(pid, 0)) waitpid(pid, &status, WNOHANG);
+  return 0;
+}
+#endif
+
+static const luaL_reg native_lib_f[] = {
+  {"pid_wait", pid_wait},
+  {NULL, NULL}
+};
+
+int luaopen_nvim_native(lua_State *L) {
+  lua_newtable(L);
+  luaL_register(L, NULL, native_lib_f);
+  return 1;
+}

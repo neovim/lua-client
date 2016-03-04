@@ -24,7 +24,13 @@ BUSTED ?= $(DEPS_BIN)/busted
 LUV ?= $(DEPS_PREFIX)/lib/luarocks/rocks/luv
 MSGPACK ?= $(DEPS_PREFIX)/lib/luarocks/rocks/lua-messagepack
 COXPCALL ?= $(DEPS_PREFIX)/lib/luarocks/rocks/coxpcall
-LUAPOSIX ?= $(DEPS_PREFIX)/lib/luarocks/rocks/luaposix
+
+# Compilation
+CC ?= gcc
+CFLAGS ?= -g -fPIC -Wall -Wextra -Werror -Wconversion -Wextra \
+	-Wstrict-prototypes -pedantic
+LDFLAGS ?= -shared -fPIC
+DEPS_INCLUDE_FLAGS ?= -I$(DEPS_PREFIX)/include
 
 # Misc
 # Options used by the 'valgrind' target, which runs the tests under valgrind
@@ -36,9 +42,9 @@ FETCH ?= curl -L -o -
 UNTGZ ?= tar xfz - --strip-components=1
 
 
-all: deps
+all: deps nvim/native.so
 
-deps: | $(MSGPACK) $(LUAPOSIX) $(COXPCALL) $(BUSTED) $(LUV)
+deps: | $(MSGPACK) $(COXPCALL) $(BUSTED) $(LUV)
 
 test: all
 	$(BUSTED) -v '--lpath=./nvim/?.lua;' '--cpath=./nvim/?.so;' -o gtest test
@@ -56,6 +62,12 @@ clean:
 distclean: clean
 	rm -rf $(DEPS_DIR)
 
+nvim/native.o: nvim/native.c $(LUA) $(LIBUV)
+	$(CC) $(CFLAGS) -o $@ -c $< $(DEPS_INCLUDE_FLAGS)
+
+nvim/native.so: nvim/native.o
+	$(CC) $(LDFLAGS) $< -o $@
+
 $(BUSTED): | $(LUAROCKS)
 	$(LUAROCKS) install busted
 	$(LUAROCKS) install inspect  # helpful for debugging
@@ -68,9 +80,6 @@ $(MSGPACK): $(LUAROCKS)
 
 $(COXPCALL): $(LUAROCKS)
 	$(LUAROCKS) install coxpcall
-
-$(LUAPOSIX): $(LUAROCKS)
-	$(LUAROCKS) install luaposix
 
 $(LUAROCKS): $(LUA)
 	dir="$(DEPS_DIR)/src/luarocks"; \

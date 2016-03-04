@@ -1,7 +1,6 @@
 require('coxpcall')
 local uv = require('luv')
-local wait = require('posix.sys.wait')
-local kill = require('posix.signal').kill
+local native = require('nvim.native')
 local MsgpackStream = require('nvim.msgpack_stream')
 local MsgpackRpcStream = require('nvim.msgpack_rpc_stream')
 
@@ -144,12 +143,7 @@ function Session:exit()
   if pid == nil then
     return  -- not a child stream
   end
-  -- Work around libuv bug that leaves defunct children:
-  -- https://github.com/libuv/libuv/issues/154 
-  while kill(pid, 0) == 0 do
-    -- wait.wait(pid, wait.WNOHANG)
-    wait.wait(pid, wait.WNOHANG)
-  end
+  native.pid_wait(pid)
 end
 
 function Session:_yielding_request(method, args)

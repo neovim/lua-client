@@ -186,6 +186,8 @@ function Session:_run(request_cb, notification_cb, timeout)
   end
   self._msgpack_rpc_stream:read_start(request_cb, notification_cb, uv.stop)
   uv.run()
+  self._prepare:stop()
+  self._timer:stop()
   self._msgpack_rpc_stream:read_stop()
 end
 

@@ -78,8 +78,8 @@ function MsgpackRpcStream:read_stop()
   self._msgpack_stream:read_stop()
 end
 
-function MsgpackRpcStream:close()
-  self._msgpack_stream:close()
+function MsgpackRpcStream:close(signal)
+  self._msgpack_stream:close(signal)
 end
 
 return MsgpackRpcStream

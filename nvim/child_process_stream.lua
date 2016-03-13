@@ -1,4 +1,5 @@
 local uv = require('luv')
+local native = require('nvim.native')
 
 
 local ChildProcessStream = {}
@@ -40,7 +41,7 @@ function ChildProcessStream:read_stop()
   self._child_stdout:read_stop()
 end
 
-function ChildProcessStream:close(kill)
+function ChildProcessStream:close(signal)
   if self._closed then
     return
   end
@@ -48,12 +49,12 @@ function ChildProcessStream:close(kill)
   self:read_stop()
   self._child_stdin:close()
   self._child_stdout:close()
-  if kill then
-    self._proc:kill('sigkill')
-  else
-    self._proc:kill()
+  if type(signal) == 'string' then
+    self._proc:kill('sig'..signal)
   end
   self._proc:close()
+  uv.run('nowait')
+  native.pid_wait(self._pid)
 end
 
 return ChildProcessStream

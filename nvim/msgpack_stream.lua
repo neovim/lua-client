@@ -68,8 +68,8 @@ function MsgpackStream:read_stop()
   self._stream:read_stop()
 end
 
-function MsgpackStream:close()
-  self._stream:close()
+function MsgpackStream:close(signal)
+  self._stream:close(signal)
 end
 
 return MsgpackStream

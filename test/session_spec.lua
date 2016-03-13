@@ -4,16 +4,16 @@ local Session = require('nvim.session')
 local nvim_prog = os.getenv('NVIM_PROG') or 'nvim'
 
 describe('Session', function()
-  local proc_stream, msgpack_stream, msgpack_rpc_stream, session, exited
+  local proc_stream, msgpack_stream, msgpack_rpc_stream, session, closed
 
   before_each(function()
-    exited = false
+    closed = false
     proc_stream = ChildProcessStream.spawn({nvim_prog, '-u', 'NONE', '--embed'})
     session = Session.new(proc_stream)
   end)
 
   after_each(function()
-    if not exited then
+    if not closed then
       session:request('vim_command', 'qa!')
     end
   end)
@@ -101,8 +101,8 @@ describe('Session', function()
       responded = true
     end, 50)
     assert.is_false(responded)
-    session:exit()
-    exited = true
+    session:close()
+    closed = true
   end)
 end)
 

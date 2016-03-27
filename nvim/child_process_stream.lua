@@ -21,6 +21,12 @@ function ChildProcessStream.spawn(argv)
   }, function()
     self:close()
   end)
+
+  if not self._proc then
+    local err = self._pid
+    error(err)
+  end
+
   return self
 end
 

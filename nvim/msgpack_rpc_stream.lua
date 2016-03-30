@@ -1,85 +1,92 @@
+local mpack = require('mpack')
+
 local Response = {}
 Response.__index = Response
 
-function Response.new(msgpack_stream, request_id)
+function Response.new(msgpack_rpc_stream, request_id)
   return setmetatable({
-    _msgpack_stream = msgpack_stream,
+    _msgpack_rpc_stream = msgpack_rpc_stream,
     _request_id = request_id
   }, Response)
 end
 
 function Response:send(value, is_error)
+  local data = self._msgpack_rpc_stream._session:reply(self._request_id)
   if is_error then
-    self._msgpack_stream:write({1, self._request_id, value, nil})
+    data = data .. self._msgpack_rpc_stream._pack(value)
+    data = data .. self._msgpack_rpc_stream._pack(mpack.NIL)
   else
-    self._msgpack_stream:write({1, self._request_id, nil, value})
+    data = data .. self._msgpack_rpc_stream._pack(mpack.NIL)
+    data = data .. self._msgpack_rpc_stream._pack(value)
   end
+  self._msgpack_rpc_stream._stream:write(data)
 end
-
 
 local MsgpackRpcStream = {}
 MsgpackRpcStream.__index = MsgpackRpcStream
 
-function MsgpackRpcStream.new(msgpack_stream)
+function MsgpackRpcStream.new(stream)
   return setmetatable({
-    _msgpack_stream = msgpack_stream,
-    _next_request_id = 1,
-    _pending_requests = {}
+    _stream = stream,
+    _pack = mpack.Packer(),
+    _unpack = mpack.Unpacker(),
+    _session = mpack.Session(),
   }, MsgpackRpcStream)
 end
 
 function MsgpackRpcStream:write(method, args, response_cb)
+  local data
   if response_cb then
     assert(type(response_cb) == 'function')
-    -- request
-    local request_id = self._next_request_id
-    self._next_request_id = request_id + 1
-    self._msgpack_stream:write({0, request_id, method, args})
-    self._pending_requests[request_id] = response_cb
+    data = self._session:request(response_cb)
   else
-    -- notification
-    self._msgpack_stream:write({2, method, args})
+    data = self._session:notify()
   end
+
+  data = data ..  self._pack(method) ..  self._pack(args)
+  self._stream:write(data)
 end
 
 function MsgpackRpcStream:read_start(request_cb, notification_cb, eof_cb)
-  self._msgpack_stream:read_start(function(msg)
-    if not msg then
+  self._stream:read_start(function(data)
+    if not data then
       return eof_cb()
     end
-    local msg_type = msg[1]
-    if msg_type == 0 then
-      -- request
-      --   - msg[2]: id
-      --   - msg[3]: method name
-      --   - msg[4]: arguments
-      request_cb(msg[3], msg[4], Response.new(self._msgpack_stream, msg[2]))
-    elseif msg_type == 1 then
-      -- response to a previous request:
-      --   - msg[2]: the id
-      --   - msg[3]: error(if any)
-      --   - msg[4]: result(if not errored)
-      local id = msg[2]
-      local handler = self._pending_requests[id]
-      self._pending_requests[id] = nil
-      handler(msg[3], msg[4])
-    elseif msg_type == 2 then
-      -- notification/event
-      --   - msg[2]: event name
-      --   - msg[3]: arguments
-      notification_cb(msg[2], msg[3])
-    else
-      self._msgpack_stream:write({1, 0, 'Invalid message type', nil})
+    local type, arg
+    local pos = 1
+    local len = #data
+    while pos <= len do
+      type, arg, pos = self._session:receive(data, pos)
+      if type == 'request' or type == 'notification' then
+        local method, args
+        method, pos = self._unpack(data, pos)
+        args, pos = self._unpack(data, pos)
+        if type == 'request' then
+          request_cb(method, args, Response.new(self, arg))
+        else
+          notification_cb(method, args)
+        end
+      elseif type == 'response' then
+        local error, result
+        error, pos = self._unpack(data, pos)
+        result, pos = self._unpack(data, pos)
+        if error == mpack.NIL then
+          error = nil
+        else
+          result = mpack.NIL
+        end
+        arg(error, result)
+      end
     end
   end)
 end
 
 function MsgpackRpcStream:read_stop()
-  self._msgpack_stream:read_stop()
+  self._stream:read_stop()
 end
 
 function MsgpackRpcStream:close(signal)
-  self._msgpack_stream:close(signal)
+  self._stream:close(signal)
 end
 
 return MsgpackRpcStream

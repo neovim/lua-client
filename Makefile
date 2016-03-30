@@ -22,7 +22,7 @@ LUA ?= $(DEPS_BIN)/lua
 LUAROCKS ?= $(DEPS_BIN)/luarocks
 BUSTED ?= $(DEPS_BIN)/busted
 LUV ?= $(DEPS_PREFIX)/lib/luarocks/rocks/luv
-MSGPACK ?= $(DEPS_PREFIX)/lib/luarocks/rocks/lua-messagepack
+MPACK ?= $(DEPS_PREFIX)/lib/luarocks/rocks/mpack
 COXPCALL ?= $(DEPS_PREFIX)/lib/luarocks/rocks/coxpcall
 
 # Compilation
@@ -44,7 +44,7 @@ UNTGZ ?= tar xfz - --strip-components=1
 
 all: deps nvim/native.so
 
-deps: | $(MSGPACK) $(COXPCALL) $(BUSTED) $(LUV)
+deps: | $(MPACK) $(COXPCALL) $(BUSTED) $(LUV)
 
 test: all
 	$(BUSTED) -v '--lpath=./nvim/?.lua;' '--cpath=./nvim/?.so;' -o gtest test
@@ -75,8 +75,8 @@ $(BUSTED): | $(LUAROCKS)
 $(LUV): $(LUAROCKS)
 	$(LUAROCKS) install luv
 
-$(MSGPACK): $(LUAROCKS)
-	$(LUAROCKS) install lua-messagepack
+$(MPACK): $(LUAROCKS)
+	$(LUAROCKS) install mpack
 
 $(COXPCALL): $(LUAROCKS)
 	$(LUAROCKS) install coxpcall

@@ -1,6 +1,5 @@
 require('coxpcall')
 local uv = require('luv')
-local MsgpackStream = require('nvim.msgpack_stream')
 local MsgpackRpcStream = require('nvim.msgpack_rpc_stream')
 
 
@@ -43,7 +42,7 @@ end
 
 function Session.new(stream)
   return setmetatable({
-    _msgpack_rpc_stream = MsgpackRpcStream.new(MsgpackStream.new(stream)),
+    _msgpack_rpc_stream = MsgpackRpcStream.new(stream),
     _pending_messages = {},
     _prepare = uv.new_prepare(),
     _timer = uv.new_timer(),

@@ -46,14 +46,15 @@ function MsgpackRpcStream.new(stream)
         [Tabpage] = function(o) return 2, o.id end
       }
     }),
-    _unpack = mpack.Unpacker({
-      ext = {
-        [0] = function(c, s) return Buffer.new(s) end,
-        [1] = function(c, s) return Window.new(s) end,
-        [2] = function(c, s) return Tabpage.new(s) end
-      }
+    _session = mpack.Session({
+      unpack = mpack.Unpacker({
+        ext = {
+          [0] = function(c, s) return Buffer.new(s) end,
+          [1] = function(c, s) return Window.new(s) end,
+          [2] = function(c, s) return Tabpage.new(s) end
+        }
+      })
     }),
-    _session = mpack.Session(),
   }, MsgpackRpcStream)
 end
 
@@ -75,30 +76,26 @@ function MsgpackRpcStream:read_start(request_cb, notification_cb, eof_cb)
     if not data then
       return eof_cb()
     end
-    local type, arg
+    local type, id_or_cb
     local pos = 1
     local len = #data
     while pos <= len do
-      type, arg, pos = self._session:receive(data, pos)
+      type, id_or_cb, method_or_error, args_or_result, pos =
+        self._session:receive(data, pos)
       if type == 'request' or type == 'notification' then
-        local method, args
-        method, pos = self._unpack(data, pos)
-        args, pos = self._unpack(data, pos)
         if type == 'request' then
-          request_cb(method, args, Response.new(self, arg))
+          request_cb(method_or_error, args_or_result, Response.new(self,
+                                                                   id_or_cb))
         else
-          notification_cb(method, args)
+          notification_cb(method_or_error, args_or_result)
         end
       elseif type == 'response' then
-        local error, result
-        error, pos = self._unpack(data, pos)
-        result, pos = self._unpack(data, pos)
-        if error == mpack.NIL then
-          error = nil
+        if method_or_error == mpack.NIL then
+          method_or_error = nil
         else
-          result = mpack.NIL
+          args_or_result = nil
         end
-        arg(error, result)
+        id_or_cb(method_or_error, args_or_result)
       end
     end
   end)

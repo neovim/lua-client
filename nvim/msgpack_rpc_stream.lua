@@ -1,5 +1,16 @@
 local mpack = require('mpack')
 
+-- temporary hack to be able to manipulate buffer/window/tabpage
+local Buffer = {}
+Buffer.__index = Buffer
+function Buffer.new(id) return setmetatable({id=id}, Buffer) end
+local Window = {}
+Window.__index = Window
+function Window.new(id) return setmetatable({id=id}, Window) end
+local Tabpage = {}
+Tabpage.__index = Tabpage
+function Tabpage.new(id) return setmetatable({id=id}, Tabpage) end
+
 local Response = {}
 Response.__index = Response
 
@@ -28,8 +39,20 @@ MsgpackRpcStream.__index = MsgpackRpcStream
 function MsgpackRpcStream.new(stream)
   return setmetatable({
     _stream = stream,
-    _pack = mpack.Packer(),
-    _unpack = mpack.Unpacker(),
+    _pack = mpack.Packer({
+      ext = {
+        [Buffer] = function(o) return 0, o.id end,
+        [Window] = function(o) return 1, o.id end,
+        [Tabpage] = function(o) return 2, o.id end
+      }
+    }),
+    _unpack = mpack.Unpacker({
+      ext = {
+        [0] = function(c, s) return Buffer.new(s) end,
+        [1] = function(c, s) return Window.new(s) end,
+        [2] = function(c, s) return Tabpage.new(s) end
+      }
+    }),
     _session = mpack.Session(),
   }, MsgpackRpcStream)
 end

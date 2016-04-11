@@ -1,5 +1,5 @@
 package = 'nvim-client'
-version = '0.0.1-23'
+version = '0.0.1-24'
 source = {
   url = 'https://github.com/neovim/lua-client/archive/' .. version .. '.tar.gz',
   dir = 'lua-client-' .. version,
@@ -17,9 +17,10 @@ dependencies = {
 
 local function make_modules()
   return {
+    ['nvim.socket_stream'] = 'nvim/socket_stream.lua',
+    ['nvim.tcp_stream'] = 'nvim/tcp_stream.lua',
     ['nvim.stdio_stream'] = 'nvim/stdio_stream.lua',
     ['nvim.child_process_stream'] = 'nvim/child_process_stream.lua',
-    ['nvim.msgpack_stream'] = 'nvim/msgpack_stream.lua',
     ['nvim.msgpack_rpc_stream'] = 'nvim/msgpack_rpc_stream.lua',
     ['nvim.session'] = 'nvim/session.lua',
     ['nvim.native'] = {

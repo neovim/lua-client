@@ -2,7 +2,6 @@ require('coxpcall')
 local uv = require('luv')
 local MsgpackRpcStream = require('nvim.msgpack_rpc_stream')
 
-
 local Session = {}
 Session.__index = Session
 
@@ -181,5 +180,6 @@ function Session:_run(request_cb, notification_cb, timeout)
   self._timer:stop()
   self._msgpack_rpc_stream:read_stop()
 end
+
 
 return Session

@@ -44,9 +44,22 @@ all: deps nvim/native.so
 
 deps: | $(MPACK) $(COXPCALL) $(BUSTED) $(LUV)
 
-test: all
-	NVIM_LOG_FILE=nvimlog $(BUSTED) -v $(_TEST_TAG) \
-		'--lpath=./nvim/?.lua;' '--cpath=./nvim/?.so;' -o gtest test
+test: all unit_test integration_test
+
+unit_test:
+	echo "Running unit tests"
+	$(BUSTED) -v '--lpath=./nvim/?.lua;' '--cpath=./nvim/?.so;' --no-recursive -o gtest test
+
+integration_test_nvim:
+	echo "Running nvim integration tests"
+	$(BUSTED) -v '--lpath=./nvim/?.lua;' '--cpath=./nvim/?.so;' -o gtest test/integration/nvim_spec.lua
+
+integration_test_session:
+	echo "Running session integration tests"
+	$(BUSTED) -v '--lpath=./nvim/?.lua;' '--cpath=./nvim/?.so;' -o gtest test/integration/session_spec.lua
+
+# We can not run all the tests at once using busted because of this: https://github.com/luvit/luv/issues/244
+integration_test: integration_test_nvim integration_test_session
 
 valgrind: all
 	eval $$($(LUAROCKS) path); \

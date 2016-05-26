@@ -13,12 +13,12 @@ do
   socket_file = string.format("/tmp/nvim.socket-%d", math.random(1000,9999))
 end
 
-function test_session(description, session_factory, session_destroy)
+local function test_session(description, session_factory, session_destroy)
   local get_api_info = function (session)
     local ok, res = session:request('vim_get_api_info')
     return ok, unpack(res)
   end
-  describe(description, function()
+  describe(string.format('#integration test %s', description), function()
     local closed, session
 
     before_each(function()
@@ -97,7 +97,7 @@ function test_session(description, session_factory, session_destroy)
       local requested = 0
       local _, channel_id, _ = get_api_info(session)
 
-      local function on_request(method, args)
+      local function on_request(method, _)
         assert.are.same("method", method)
         requested = requested + 1
         if requested < 10 then
@@ -139,7 +139,7 @@ function test_session(description, session_factory, session_destroy)
 end
 
 -- Session using ChildProcessStream
-test_session("Session using ChidProcessStream", function ()
+test_session("Session test using #ChildProcessStream", function ()
   local proc_stream = ChildProcessStream.spawn({
     nvim_prog, '-u', 'NONE', '--embed',
   })
@@ -147,7 +147,7 @@ test_session("Session using ChidProcessStream", function ()
 end)
 
 -- Session using SocketStream
-test_session(string.format("Session using SocketStream [%s]", socket_file), function ()
+test_session(string.format("Session using #SocketStream [%s]", socket_file), function ()
   child_session = Session.new(ChildProcessStream.spawn({
     nvim_prog, '-u', 'NONE', '--embed',
     '--cmd', string.format('call serverstart("%s")', socket_file)
@@ -167,7 +167,7 @@ end, function ()
   end
 end)
 
-describe('Session using SocketStream', function ()
+describe('#integration test Session using #SocketStream', function ()
   before_each(function()
     local socket_stream = SocketStream.open("/tmp/nvim.sock")
     socket_session = Session.new(socket_stream)
@@ -185,7 +185,7 @@ describe('Session using SocketStream', function ()
 end)
 
 -- Session using TcpStream
-test_session("Session using TcpStream", function ()
+test_session("#integration test Session using #TcpStream", function ()
   child_session = Session.new(ChildProcessStream.spawn({
     nvim_prog, '-u', 'NONE', '--embed',
     '--cmd', 'call serverstart("127.0.0.1:6666")'
@@ -200,7 +200,7 @@ end, function ()
   tcp_session:close()
 end)
 
-describe('Session using TcpStream', function ()
+describe('#integration test Session using #TcpStream', function ()
   before_each(function()
     local tcp_stream = TcpStream.open("127.0.0.1", 6666)
     tcp_session = Session.new(tcp_stream)
@@ -223,7 +223,7 @@ local i_min = 0
 while arg[ i_min ] do i_min = i_min - 1 end
 i_min = i_min + 1
 
-describe('stdio', function()
+describe('#integration test #stdio', function()
   it('sends and receive data through stdout/stdin', function()
     local proc_stream = ChildProcessStream.spawn({
       arg[i_min],

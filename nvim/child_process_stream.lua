@@ -5,7 +5,7 @@ local native = require('nvim.native')
 local ChildProcessStream = {}
 ChildProcessStream.__index = ChildProcessStream
 
-function ChildProcessStream.spawn(argv)
+function ChildProcessStream.spawn(argv, env)
   local self = setmetatable({
     _child_stdin = uv.new_pipe(false),
     _child_stdout = uv.new_pipe(false)
@@ -18,6 +18,7 @@ function ChildProcessStream.spawn(argv)
   self._proc, self._pid = uv.spawn(prog, {
     stdio = {self._child_stdin, self._child_stdout, 2},
     args = args,
+    env = env,
   }, function()
     self:close()
   end)

@@ -9,7 +9,7 @@ description = {
   license = 'Apache'
 }
 dependencies = {
-  'lua ~> 5.1',
+  'lua >= 5.1',
   'mpack',
   'luv',
   'coxpcall'

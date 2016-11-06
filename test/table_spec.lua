@@ -146,6 +146,58 @@ describe('table.table_filter', function()
   end)
 end)
 
+describe('table.table_all', function()
+  before_each(function()
+    f = function(v)
+      return v % 2 == 0
+    end
+  end)
+  it('Work for tables with all items being true', function()
+    local t = {2, 4, 6, 8, 10}
+    assert.True(table.table_all(t, f))
+    assert.True(table.table_any(t, f))
+  end)
+  it('Work for tables with all items being true', function()
+    t = {2, 4, 6, 8, 9, 10}
+    assert.False(table.table_all(t, f))
+    assert.True(table.table_any(t, f))
+  end)
+end)
+
+describe('table.table_any', function()
+  before_each(function()
+    f = function(v)
+      return v % 7 == 0
+    end
+  end)
+  it('Work for tables with any items being true', function()
+    t = {2, 4, 6, 8, 10, 7}
+    assert.True(table.table_any(t, f))
+    assert.False(table.table_all(t, f))
+  end)
+  it('Work for tables with none items being true', function()
+    t = {2, 4, 6, 8, 9, 10}
+    assert.False(table.table_any(t, f))
+    assert.False(table.table_all(t, f))
+  end)
+end)
+
+describe('table.table_none', function()
+  before_each(function()
+    f = function(v)
+      return v % 7 == 0
+    end
+  end)
+  it('Work for tables with any items being true', function()
+    t = {2, 4, 6, 8, 10, 7}
+    assert.False(table.table_none(t, f))
+  end)
+  it('Work for tables with none items being true', function()
+    t = {2, 4, 6, 8, 9, 10}
+    assert.True(table.table_none(t, f))
+  end)
+end)
+
 describe('table.table_join', function()
   local custom_t
   before_each(function()

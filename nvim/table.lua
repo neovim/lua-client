@@ -271,6 +271,35 @@ function Table.table_ireduce(f)
 end
 
 -----
+-- returns true if all items (values) in t1 satisify f, false otherwise
+-- {A = B, ...} t1 table to check
+-- B -> boolean f function to check every item (value) in t1
+-- treturn: boolean
+function Table.table_all(t1, f)
+  local function _and(a, b) return a and f(b) end
+  return Table.table_ifoldr(true, _and)(t1)
+end
+
+-----
+-- returns true if any item (value) in t1 satisify f, false otherwise
+-- {A = B, ...} t1 table to check
+-- B -> boolean f function to check every item (value) in t1
+-- treturn: boolean
+function Table.table_any(t1, f)
+  local function _or(a, b) return a or f(b) end
+  return Table.table_ifoldr(false, _or)(t1)
+end
+
+-----
+-- returns true if none of the items (values) in t1 satisify f, false otherwise
+-- {A = B, ...} t1 table to check
+-- B -> boolean f function to check every item (value) in t1
+-- treturn: boolean
+function Table.table_none(t1, f)
+  return not Table.table_any(t1, f)
+end
+
+-----
 -- joins indexed items in a table creating a string
 -- {A, }: t table with items to join (items must to implement __tostring)
 -- string: sep string to use as separator between items

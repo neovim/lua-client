@@ -18,16 +18,35 @@ local Table = {}
 -- (number -> boolean) -> A
 -- treturn: {A, ...}
 function Table.table_copy(t1, t2, filter_f, key_f)
-  local f = filter_f or function (_) return true end
+  local f = filter_f or function (_, _) return true end
   local g = key_f or function (_, k) return k end
   local _t = t2 or {}
   for k, v in pairs(t1) do
-    if f(k) then
+    if f(k, v) then
       _t[g(#_t, k)] = v
     end
   end
 
   return _t
+end
+
+-----
+-- filters elements of t1 using the filter function filter_f
+-- t1 can be an indexed list, a dictionary or a mix of boths
+-- {A, ...}: t1 table to filter
+-- A -> B -> boolean: filter_f1 function taking index and value and returning boolean
+-- if the function returns true the element is not filtered otherwise it's filtered
+-- treturn: {A, ...}
+function Table.table_filter(t1, filter_f)
+  return Table.table_copy(t1, {}, 
+    function(_, v) return filter_f(v) end,
+    function(i, v) 
+      if type(v) ~= "number" then
+        return v
+      else
+        return i + 1
+      end
+    end)
 end
 
 -----
@@ -53,7 +72,6 @@ function Table.table_icopy(t1, t2)
     function(k) return type(k) == 'number' end,
     function(n, _) return n + 1 end)
 end
-
 
 -- asserts that two tables contains the same items using idexed items
 local function eq_idx_mode(t1, t2, cmp_f)

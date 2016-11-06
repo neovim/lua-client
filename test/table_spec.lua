@@ -122,6 +122,30 @@ test_table_copy('table.table_kvcopy', table.table_kvcopy, false, true)(
     end)
 end)
 
+describe('table.table_filter', function()
+  it('Can filter a table with indices', function()
+    expected_t = {2, 4, 6, '2', '4', '6'}
+    t = table.table_filter(tidx_test, function(v)
+      return (tonumber(v) % 2) == 0 
+    end)
+    assert.contains_same_items(t, expected_t)
+  end)
+  it('Can filter a table with values', function()
+    expected_t = {dos = 2, cuatro = 4, seis = 6, ocho = 8}
+    t = table.table_filter(tkv_test, function(v)
+      return (tonumber(v) % 2) == 0 
+    end)
+    assert.contains_same_items(t, expected_t)
+  end)
+  it('Can filter a table with values and indices', function()
+    expected_t = {2, 4, 6, '2', '4', '6', dos = 2, cuatro = 4, seis = 6, ocho = 8}
+    t = table.table_filter(table.table_concat(tidx_test, tkv_test), function(v)
+      return (tonumber(v) % 2) == 0 
+    end)
+    assert.contains_same_items(t, expected_t)
+  end)
+end)
+
 describe('table.table_join', function()
   local custom_t
   before_each(function()

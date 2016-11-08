@@ -229,9 +229,11 @@ end
 function Table.table_fmap(t, f)
   local _t = {}
   for k, v in pairs(t) do
-    local success, _k, _v = pcall(f, k, v)
-    if success and _k then
+    local _k, _v = f(k, v)
+    if _k then
       _t[_k] = _v
+    elseif _v then
+      _t[#_t+1] = _v
     end
   end
 
@@ -311,6 +313,16 @@ function Table.table_join(t, sep)
     local d = string.format('%s%s%s', tostring(a), sep, tostring(b)) 
     return d
   end)(t_strings)
+end
+
+function Table.table_len(t)
+  local n = 0
+  for k, _ in pairs(t) do
+    if type(k) ~= 'number' then
+      n = n + 1
+    end
+  end
+  return n
 end
 
 return Table

@@ -1,6 +1,7 @@
 require('test.asserts')
 local api = require('nvim.api')
 local mocked_session = require('test.mocked_session')
+local table = require('nvim.table')
 
 -----
 -- Some data
@@ -11,12 +12,12 @@ local functions1 = {
     parameters = { { "Integer", "a" } }
   },
   {
-    name = "buffer_get_line",
+    name = "nvim_buf_get_line",
     return_type = "String",
     parameters = { { "Buffer", "buffer" }, { "Integer", "index" } }
   },
   {
-    name = "Window_set_line",
+    name = "nvim_win_set_line",
     return_type = "void",
     parameters = { { "Buffer", "buffer" }, { "Integer", "index" }, { "String", "line" } }
   }
@@ -40,27 +41,27 @@ local functions2 = {
 }
 local functions3 = {
   {
-    name = "buffer_fun1",
+    name = "nvim_buf_fun1",
     return_type = "Integer",
     parameters = { { "Integer", "a" } }
   },
   {
-    name = "buffer_fun2",
+    name = "nvim_buf_fun2",
     return_type = "String",
     parameters = { { "Buffer", "buffer" }, { "Integer", "index" } }
   },
   {
-    name = "buffer_fun3",
+    name = "nvim_buf_fun3",
     return_type = "void",
     parameters = { { "Buffer", "buffer" }, { "Integer", "index" }, { "String", "line" } }
   },
   {
-    name = 'window_fun1',
+    name = 'nvim_win_fun1',
     return_type = 'ArrayOf(Integer)',
     parameters = {}
   },
   {
-    name = 'tabpage_fun1',
+    name = 'nvim_tabpage_fun1',
     return_type = 'ArrayOf(Integer)',
     parameters = {}
   }
@@ -140,9 +141,43 @@ describe('Api', function()
     assert.contains_same_items(types.Buffer.methods, {})
   end)
 
+  -- This basically tests that we can get methods for nvim and for different
+  -- types like window (nvim_window) and buffer (nvim_buf). It also checks that
+  -- functions prefixed with nvim_* being the * the same prefix as in a type are 
+  -- not included in Nvim client but in concrete types
+  it('prefixes works when generating types and methods', function()
+    local api = api.new(mocked_session.new({
+      ext_types = {Buffer = {prefix = 'nvim_buf_'}, Window = {prefix = 'nvim_win_'}},
+      functions = functions1
+    }))
+    has_basic_types(api._types, {Buffer = true, Window = true})
+    -- Check that methods are empty in all the basic types
+    for _, v in pairs(api._types) do
+      if v._name ~= 'Buffer' and v._name ~= 'Window' then
+        assert.contains_same_items(v.methods, {}, false, true)
+      end
+    end
+
+    assert.equal(type(api.methods), 'table')
+    assert.equal(type(api.methods.test), 'table')
+    assert.equal(table.table_len(api.methods), 1)
+    
+    -- Check that the buffer type have been created just with 1 method
+    -- nvim_ methods have been filtered out
+    assert.equal(type(api._types.Buffer), 'table')
+    assert.equal(type(api._types.Buffer.methods.get_line), 'table')
+    assert.equal(table.table_len(api._types.Buffer.methods), 1)
+    
+    -- Check that the window type have been created just with 1 method
+    -- nvim_ methods have been filtered out
+    assert.equal(type(api._types.Window), 'table')
+    assert.equal(type(api._types.Window.methods.set_line), 'table')
+    assert.equal(table.table_len(api._types.Window.methods), 1)
+  end)
+
   it('we can generate ext_types with methods', function()
     local types = api.new(mocked_session.new({
-      ext_types = {Buffer = {}, Window = {}}, 
+      ext_types = {Buffer = {prefix = 'nvim_buf_'}, Window = {prefix = 'nvim_win_'}}, 
       functions = functions3
     }))._types
     has_basic_types(types, {Buffer = true, Window = true})

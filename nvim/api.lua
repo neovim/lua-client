@@ -419,22 +419,33 @@ end
 -- Generates a table with methods for a type
 -- string: typ_name name of the type to generate the methods for
 -- functions: {} a table with the functions available (coming from nvim)
--- string: prefix_name prefix used to filter the methods out
--- boolen: uses_self true if methods generated should use self notation, false otherwise
+-- {to_use:{string, ...}, to_avoid:{string, ...}}: prefixes table with list of prefixes used
+-- to match functions and the list of prefixes to filter out functions.
+-- boolean: uses_self true if methods generated should use self notation, false otherwise
 -- ?number: version specifies minimum version to use, does not include functions/methods
 -- deprecated since the specified version. If nil all functions/methods are included
 -- treturn: {string:Method}
-local function gen_methods(typ_name, functions, prefix_name, uses_self, version)
-  local prefix = string.lower(prefix_name or typ_name) .. '_'
+local function gen_methods(typ_name, functions, prefixes, uses_self, version)
+  prefixes_to_use = table.table_fmap(prefixes.to_use or {typ_name}, function(k, prefix)
+    return k, string.lower(prefix)
+  end)
+  prefixes_to_avoid = table.table_fmap(prefixes.to_avoid or {}, function(k, prefix)
+    return k, string.lower(prefix)
+  end)
   -- require version 0 by default
   local required_version = version or 0
+  local match_prefix = function(name, prefixes)
+    return table.table_any(prefixes, function(prefix)
+      return name:match(prefix)
+    end)
+  end
   return table.table_fmap(functions, function(_, func)
     -- Filter only functions starting with prefix_name as methods
     -- Also replace prefix
     local deprecated_since = func.deprecated_since or (required_version + 1)
-    print(required_version, deprecated_since, func.name)
-    if func.name:match(prefix) and required_version < deprecated_since then
-      local func_name = func.name:gsub(prefix, '')
+    local func_prefix = match_prefix(func.name, prefixes_to_use)
+    if func_prefix and not match_prefix(func.name, prefixes_to_avoid) and required_version < deprecated_since then 
+      local func_name = func.name:gsub(func_prefix, '')
       return func_name, Method.new(table.table_copy(func), typ_name, func_name, uses_self)
     else
       return nil
@@ -470,7 +481,8 @@ function Types.new(from_types, functions, session, version)
   local types_f = table.table_fmap(from_types, function(typ_name, typ_tbl)
     local methods = {}
     if not typ_tbl.basic_type then
-      methods = gen_methods(typ_name, functions, typ_tbl.prefix or typ_name, not typ_tbl.basic_type, version)
+      prefixes = { to_use = {typ_tbl.prefix or typ_name } }
+      methods = gen_methods(typ_name, functions, prefixes, not typ_tbl.basic_type, version)
     end
     return typ_name, function(types)
       return Type.new(typ_name, typ_tbl, methods, session, types)
@@ -534,6 +546,10 @@ function Api.new(session, version)
     return typ_name, table.table_concat(typ_tbl or {}, typ_info)
   end)
 
+  local ext_types_prefixes = table.table_fmap(ext_types, function(typ_name, typ_info)
+    return nil, typ_info.prefix or typ_name
+  end)
+
   local all_types = table.table_concat(ext_types, table.table_copy(type_tables))
 
   local _error_types = table.table_fmap(api_info.error_types, function(typ_name)
@@ -543,12 +559,16 @@ function Api.new(session, version)
   local types = Types.new(all_types, api_info.functions, session, version or 0)
   local error_types = Types.new(_error_types, api_info.functions, session, version or 0)
 
+  local prefixes = {
+    to_use = {'nvim_', 'vim_'},
+    to_avoid = ext_types_prefixes
+  }
   local api = setmetatable({
     _api_info = api_info,
     _session = session,
     _types = types,
     _error_types = error_types,
-    methods = gen_methods('Nvim', api_info.functions, 'nvim', false, version or 0)
+    methods = gen_methods('Nvim', api_info.functions, prefixes, false, version or 0)
   }, Api)
 
   return api

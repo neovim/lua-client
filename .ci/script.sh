@@ -8,7 +8,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 get_nvim() {
   mkdir "$NVIM_INSTALL_PREFIX"
-  wget -q -O - https://github.com/neovim/neovim/releases/download/nightly/neovim-linux64.tar.gz \
+  curl -L https://github.com/neovim/neovim/releases/download/nightly/nvim-linux64.tar.gz \
     | tar xzf - --strip-components=1 -C "$NVIM_INSTALL_PREFIX"
   "$NVIM_PROG" --version
 }

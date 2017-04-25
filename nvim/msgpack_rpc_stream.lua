@@ -41,17 +41,17 @@ function MsgpackRpcStream.new(stream)
     _stream = stream,
     _pack = mpack.Packer({
       ext = {
-        [Buffer] = function(o) return 0, o.id end,
-        [Window] = function(o) return 1, o.id end,
-        [Tabpage] = function(o) return 2, o.id end
+        [Buffer] = function(o) return 0, mpack.pack(o.id) end,
+        [Window] = function(o) return 1, mpack.pack(o.id) end,
+        [Tabpage] = function(o) return 2, mpack.pack(o.id) end
       }
     }),
     _session = mpack.Session({
       unpack = mpack.Unpacker({
         ext = {
-          [0] = function(c, s) return Buffer.new(s) end,
-          [1] = function(c, s) return Window.new(s) end,
-          [2] = function(c, s) return Tabpage.new(s) end
+          [0] = function(c, s) return Buffer.new(mpack.unpack(s)) end,
+          [1] = function(c, s) return Window.new(mpack.unpack(s)) end,
+          [2] = function(c, s) return Tabpage.new(mpack.unpack(s)) end
         }
       })
     }),

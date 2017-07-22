@@ -1,13 +1,11 @@
-# This Makefile's only purpose is to simplify creating/maintaining a
-# development environment. It will setup a project-private prefix(.deps/usr)
-# with all dependencies required for building/testing
-#
-# local.mk is ignored by git and can be used for developer-specific
-# customizations, which can be:
-# - override default target
-# - define custom targets
-# - override ovariables defined here(all variables are defined with ?=)
+# This Makefile creates a project-private prefix ".deps/usr" with all
+# dependencies required for building/testing.
+
+# local.mk is ignored by git, use it for local build settings.
 -include local.mk
+
+# Use TEST_TAG=foo to pass --tags=foo to busted.
+_TEST_TAG := $(if $(TEST_TAG),--tags=$(TEST_TAG),)
 
 # Dependencies prefix
 DEPS_DIR ?= $(shell pwd)/.deps
@@ -47,7 +45,8 @@ all: deps nvim/native.so
 deps: | $(MPACK) $(COXPCALL) $(BUSTED) $(LUV)
 
 test: all
-	$(BUSTED) -v '--lpath=./nvim/?.lua;' '--cpath=./nvim/?.so;' -o gtest test
+	NVIM_LOG_FILE=nvimlog $(BUSTED) -v $(_TEST_TAG) \
+		'--lpath=./nvim/?.lua;' '--cpath=./nvim/?.so;' -o gtest test
 
 valgrind: all
 	eval $$($(LUAROCKS) path); \

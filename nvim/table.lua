@@ -8,8 +8,8 @@ local Table = {}
 -----
 -- returns a copy of a table
 -- this function copies a table, it filters elements computing
--- filter_f(key). Keys returning true are copied, and the new 
--- key is computed using key_f(n, key), where n is the index of 
+-- filter_f(key). Keys returning true are copied, and the new
+-- key is computed using key_f(n, key), where n is the index of
 -- the current key
 --
 -- {A, ...}: t1 table to copy
@@ -38,9 +38,9 @@ end
 -- if the function returns true the element is not filtered otherwise it's filtered
 -- treturn: {A, ...}
 function Table.table_filter(t1, filter_f)
-  return Table.table_copy(t1, {}, 
+  return Table.table_copy(t1, {},
     function(_, v) return filter_f(v) end,
-    function(i, v) 
+    function(i, v)
       if type(v) ~= "number" then
         return v
       else
@@ -310,7 +310,7 @@ function Table.table_join(t, sep)
   if #t == 0 then return "" end
   local t_strings = Table.table_fmap(t, function(k, v) return k, tostring(v) end)
   return Table.table_ireduce(function(a, b)
-    local d = string.format('%s%s%s', tostring(a), sep, tostring(b)) 
+    local d = string.format('%s%s%s', tostring(a), sep, tostring(b))
     return d
   end)(t_strings)
 end

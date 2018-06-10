@@ -118,7 +118,13 @@ function test_session(description, session_factory, session_destroy)
       local status, result = session:request('vim_eval',
         string.format('rpcrequest(%d, "method", 1, 2', channel_id))
       assert.is_false(status)
-      assert.are.equal('Failed to evaluate expression', result[2])
+      -- Improved parsing in nvim changed the error message between 0.2.2 and
+      -- 0.3.0, but accept either to ease transition between versions
+      if string.match(result[2], 'Failed') then
+        assert.are.equal('Failed to evaluate expression', result[2])
+      else
+        assert.are.equal('Vim:E116: Invalid arguments for function rpcrequest', result[2])
+      end
     end)
 
     it('can break out of event loop with a timeout', function()

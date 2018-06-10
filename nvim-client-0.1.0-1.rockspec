@@ -1,5 +1,5 @@
 package = 'nvim-client'
-version = '0.1.0'
+version = '0.1.0-1'
 source = {
   url = 'https://github.com/neovim/lua-client/archive/' .. version .. '.tar.gz',
   dir = 'lua-client-' .. version,

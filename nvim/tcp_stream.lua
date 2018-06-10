@@ -16,6 +16,9 @@ function TcpStream.open(host, port)
 end
 
 function TcpStream:write(data)
+  if self._stream_error then
+    error(self._stream_error)
+  end
   uv.write(self._socket, data, function(err)
     if err then
       error(self._stream_error or err)
@@ -24,6 +27,9 @@ function TcpStream:write(data)
 end
 
 function TcpStream:read_start(cb)
+  if self._stream_error then
+    error(self._stream_error)
+  end
   uv.read_start(self._socket, function(err, chunk)
     if err then
       error(err)
@@ -33,6 +39,9 @@ function TcpStream:read_start(cb)
 end
 
 function TcpStream:read_stop()
+  if self._stream_error then
+    error(self._stream_error)
+  end
   uv.read_stop(self._socket)
 end
 

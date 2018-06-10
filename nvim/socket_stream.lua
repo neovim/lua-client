@@ -16,6 +16,9 @@ function SocketStream.open(file)
 end
 
 function SocketStream:write(data)
+  if self._stream_error then
+    error(self._stream_error)
+  end
   uv.write(self._socket, data, function(err)
     if err then
       error(self._stream_error or err)
@@ -24,6 +27,9 @@ function SocketStream:write(data)
 end
 
 function SocketStream:read_start(cb)
+  if self._stream_error then
+    error(self._stream_error)
+  end
   uv.read_start(self._socket, function(err, chunk)
     if err then
       error(err)
@@ -33,6 +39,9 @@ function SocketStream:read_start(cb)
 end
 
 function SocketStream:read_stop()
+  if self._stream_error then
+    error(self._stream_error)
+  end
   uv.read_stop(self._socket)
 end
 

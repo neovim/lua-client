@@ -133,7 +133,7 @@ function MsgpackRpcStream:read_start(request_cb, notification_cb, eof_cb)
           notification_cb(method_or_error, args_or_result)
         end
       elseif type_ == 'response' then
-        self._previous_chunk = string.format('response<%s,%s>', id_or_cb, args_or_result)
+        self._previous_chunk = string.format('response<%s>', type(args_or_result))
         if method_or_error == mpack.NIL then
           method_or_error = nil
         else

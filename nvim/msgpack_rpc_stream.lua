@@ -101,12 +101,27 @@ function MsgpackRpcStream:read_start(request_cb, notification_cb, eof_cb)
     if not data then
       return eof_cb()
     end
-    local type, id_or_cb
+    local status, type, id_or_cb
     local pos = 1
     local len = #data
     while pos <= len do
-      type, id_or_cb, method_or_error, args_or_result, pos =
-        self._session:receive(data, pos)
+      -- grab a copy of pos since pcall() will set it to nil on error
+      local oldpos = pos
+      status, type, id_or_cb, method_or_error, args_or_result, pos = pcall(
+            self._session.receive, self._session, data, pos)
+      if not status then
+        -- write the full blob of bad data to a specific file
+        local outfile = io.open('./msgpack-invalid-data', 'w')
+        outfile:write(data)
+        outfile:close()
+
+        -- build a printable representation of the bad part of the string
+        local printable = hexdump(data:sub(oldpos, oldpos + 8 * 10))
+
+        print(string.format("Error deserialising msgpack data stream at pos %d:\n%s\n",
+              oldpos, printable))
+        error(type)
+      end
       if type == 'request' or type == 'notification' then
         if type == 'request' then
           request_cb(method_or_error, args_or_result, Response.new(self,

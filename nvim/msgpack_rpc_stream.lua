@@ -64,6 +64,7 @@ MsgpackRpcStream.__index = MsgpackRpcStream
 function MsgpackRpcStream.new(stream)
   return setmetatable({
     _stream = stream,
+    _previous_chunk = nil,
     _pack = mpack.Packer({
       ext = {
         [Buffer] = function(o) return 0, mpack.pack(o.id) end,
@@ -120,9 +121,11 @@ function MsgpackRpcStream:read_start(request_cb, notification_cb, eof_cb)
 
         print(string.format("Error deserialising msgpack data stream at pos %d:\n%s\n",
               oldpos, printable))
+        print(string.format("... occurred after %s", self._previous_chunk))
         error(type)
       end
       if type == 'request' or type == 'notification' then
+        self._previous_chunk = string.format('%s<%s>', type, method_or_error)
         if type == 'request' then
           request_cb(method_or_error, args_or_result, Response.new(self,
                                                                    id_or_cb))
@@ -130,6 +133,7 @@ function MsgpackRpcStream:read_start(request_cb, notification_cb, eof_cb)
           notification_cb(method_or_error, args_or_result)
         end
       elseif type == 'response' then
+        self._previous_chunk = string.format('response<%s,%s>', id_or_cb, args_or_result)
         if method_or_error == mpack.NIL then
           method_or_error = nil
         else

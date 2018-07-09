@@ -102,13 +102,13 @@ function MsgpackRpcStream:read_start(request_cb, notification_cb, eof_cb)
     if not data then
       return eof_cb()
     end
-    local status, type, id_or_cb
+    local status, type_, id_or_cb
     local pos = 1
     local len = #data
     while pos <= len do
       -- grab a copy of pos since pcall() will set it to nil on error
       local oldpos = pos
-      status, type, id_or_cb, method_or_error, args_or_result, pos = pcall(
+      status, type_, id_or_cb, method_or_error, args_or_result, pos = pcall(
             self._session.receive, self._session, data, pos)
       if not status then
         -- write the full blob of bad data to a specific file
@@ -122,17 +122,17 @@ function MsgpackRpcStream:read_start(request_cb, notification_cb, eof_cb)
         print(string.format("Error deserialising msgpack data stream at pos %d:\n%s\n",
               oldpos, printable))
         print(string.format("... occurred after %s", self._previous_chunk))
-        error(type)
+        error(type_)
       end
-      if type == 'request' or type == 'notification' then
-        self._previous_chunk = string.format('%s<%s>', type, method_or_error)
-        if type == 'request' then
+      if type_ == 'request' or type_ == 'notification' then
+        self._previous_chunk = string.format('%s<%s>', type_, method_or_error)
+        if type_ == 'request' then
           request_cb(method_or_error, args_or_result, Response.new(self,
                                                                    id_or_cb))
         else
           notification_cb(method_or_error, args_or_result)
         end
-      elseif type == 'response' then
+      elseif type_ == 'response' then
         self._previous_chunk = string.format('response<%s,%s>', id_or_cb, args_or_result)
         if method_or_error == mpack.NIL then
           method_or_error = nil

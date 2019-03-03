@@ -155,7 +155,7 @@ end)
 -- Session using SocketStream
 test_session(string.format("Session using SocketStream [%s]", socket_file), function ()
   child_session = Session.new(ChildProcessStream.spawn({
-    nvim_prog, '-u', 'NONE', '--embed',
+    nvim_prog, '-u', 'NONE', '--embed', '--headless',
     '--cmd', string.format('call serverstart("%s")', socket_file)
   }))
   child_session:request('vim_eval', '1') -- wait for nvim to start
@@ -193,7 +193,7 @@ end)
 -- Session using TcpStream
 test_session("Session using TcpStream", function ()
   child_session = Session.new(ChildProcessStream.spawn({
-    nvim_prog, '-u', 'NONE', '--embed',
+    nvim_prog, '-u', 'NONE', '--embed', '--headless',
     '--cmd', 'call serverstart("127.0.0.1:6666")'
   }))
 

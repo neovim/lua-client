@@ -65,7 +65,10 @@ function test_session(description, session_factory, session_destroy)
           assert.are.same({true, 1},
             {session:request('vim_eval', string.format('rpcnotify(%d, "lua_event", 2, [2])', channel_id))})
           return 'notified!'
+        elseif method == 'lua_error' then
+          return 'error message', true
         end
+
         assert.are.same('lua_method', method)
         assert.are.same({1, {1}}, args)
         return {'hello from lua!'}
@@ -88,6 +91,8 @@ function test_session(description, session_factory, session_destroy)
           {session:request('vim_eval' , string.format('rpcrequest(%d, "lua_notify")', channel_id))})
         assert.are.same({true, {'hello from lua!'}},
           {session:request('vim_eval', string.format('rpcrequest(%d, "lua_method", 1, [1])', channel_id))})
+        assert.are.same({false, {0, 'Vim:error message'}},
+          {session:request('vim_eval', string.format('rpcrequest(%d, "lua_error")', channel_id))})
         session:stop()
       end)
       assert.are.equal(6, notified)

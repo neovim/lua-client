@@ -30,11 +30,11 @@ local function coroutine_exec(func, ...)
   end
 
   resume(coroutine.create(function()
-    local status, result = copcall(func, unpack(args))
+    local status, result, flag = copcall(func, unpack(args))
     if on_complete then
       coroutine.yield(function()
         -- run the completion callback on the main thread
-        on_complete(status, result)
+        on_complete(status, result, flag)
       end)
     end
   end))
@@ -95,9 +95,9 @@ end
 
 function Session:run(request_cb, notification_cb, setup_cb, timeout)
   local function on_request(method, args, response)
-    coroutine_exec(request_cb, method, args, function(status, result)
+    coroutine_exec(request_cb, method, args, function(status, result, flag)
       if status then
-        response:send(result)
+        response:send(result, flag)
       else
         response:send(result, true)
       end

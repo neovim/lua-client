@@ -15,7 +15,7 @@ static int pid_wait(lua_State *L) {
 
 static int pid_wait(lua_State *L) {
   int status;
-  pid_t pid = luaL_checkint(L, 1);
+  pid_t pid = (int)luaL_checkinteger(L, 1);
   /* Work around libuv bug that leaves defunct children:
    * https://github.com/libuv/libuv/issues/154 */
   while (!kill(pid, 0)) waitpid(pid, &status, WNOHANG);

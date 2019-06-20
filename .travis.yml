@@ -21,6 +21,11 @@ env:
     # (which is run before after_success).
     - SUCCESS_MARKER="$TRAVIS_BUILD_DIR/.tests_successful"
 
+matrix:
+  include:
+    - env: LUA_URL=https://www.lua.org/ftp/lua-5.1.5.tar.gz
+    - env: LUA_URL=https://www.lua.org/ftp/lua-5.3.5.tar.gz
+
 script:         .ci/script.sh
 before_cache:   .ci/before_cache.sh
 

@@ -4,6 +4,7 @@ local SocketStream = require('nvim.socket_stream')
 local Session = require('nvim.session')
 local coxpcall = require('coxpcall')
 local busted = require('busted')
+local unpack = unpack or table.unpack -- luacheck: globals unpack (compatibility with Lua 5.1)
 
 local nvim_prog = os.getenv('NVIM_PROG') or 'nvim'
 local child_session

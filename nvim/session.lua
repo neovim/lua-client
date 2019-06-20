@@ -1,6 +1,7 @@
 local coxpcall = require('coxpcall')
 local uv = require('luv')
 local MsgpackRpcStream = require('nvim.msgpack_rpc_stream')
+local unpack = unpack or table.unpack -- luacheck: globals unpack (compatibility with Lua 5.1)
 
 
 local Session = {}

@@ -15,7 +15,7 @@ do
   socket_file = string.format("/tmp/nvim.socket-%d", math.random(1000,9999))
 end
 
-function test_session(description, session_factory, session_destroy)
+local function test_session(description, session_factory, session_destroy)
   local get_api_info = function (session)
     local ok, res = session:request('vim_get_api_info')
     return ok, unpack(res)
@@ -112,7 +112,7 @@ function test_session(description, session_factory, session_destroy)
       local requested = 0
       local _, channel_id, _ = get_api_info(session)
 
-      local function on_request(method, args)
+      local function on_request(method)
         assert.are.same("method", method)
         requested = requested + 1
         if requested < 10 then

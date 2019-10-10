@@ -19,7 +19,9 @@ function ChildProcessStream.spawn(argv, env)
     stdio = {self._child_stdin, self._child_stdout, 2},
     args = args,
     env = env,
-  }, function()
+  }, function(code, signal)
+    self.exitcode = code
+    self.exitsignal = signal
     self:close()
   end)
 

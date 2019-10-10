@@ -61,8 +61,8 @@ function ChildProcessStream:close(signal)
   if type(signal) == 'string' then
     self._proc:kill('sig'..signal)
   end
-  self._proc:close()
-  uv.run('nowait')
+
+  uv.run()
   native.pid_wait(self._pid)
 end
 

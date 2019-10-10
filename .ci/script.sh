@@ -36,5 +36,5 @@ run_tests() {
 }
 
 get_or_build_deps
+"${DEPS_INSTALL_PREFIX}/bin/luarocks" list
 run_tests
-

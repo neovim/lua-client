@@ -1,4 +1,4 @@
-require('coxpcall')
+local coxpcall = require('coxpcall')
 local uv = require('luv')
 local MsgpackRpcStream = require('nvim.msgpack_rpc_stream')
 
@@ -30,7 +30,7 @@ local function coroutine_exec(func, ...)
   end
 
   resume(coroutine.create(function()
-    local status, result, flag = copcall(func, unpack(args))
+    local status, result, flag = coxpcall.pcall(func, unpack(args))
     if on_complete then
       coroutine.yield(function()
         -- run the completion callback on the main thread
@@ -148,12 +148,12 @@ end
 function Session:_blocking_request(method, args)
   local err, result
 
-  local function on_request(method, args, response)
-    table.insert(self._pending_messages, {'request', method, args, response})
+  local function on_request(method_, args_, response)
+    table.insert(self._pending_messages, {'request', method_, args_, response})
   end
 
-  local function on_notification(method, args)
-    table.insert(self._pending_messages, {'notification', method, args})
+  local function on_notification(method_, args_)
+    table.insert(self._pending_messages, {'notification', method_, args_})
   end
 
   self._msgpack_rpc_stream:write(method, args, function(e, r)

@@ -181,7 +181,12 @@ function Session:_run(request_cb, notification_cb, timeout)
       self._prepare:stop()
     end)
   end
-  self._msgpack_rpc_stream:read_start(request_cb, notification_cb, uv.stop)
+  self._msgpack_rpc_stream:read_start(request_cb, notification_cb, function()
+    uv.run()  -- run the loop to get exitcode from child process.
+    self.child_exit = self._msgpack_rpc_stream._stream.exitcode
+    self.child_signal = self._msgpack_rpc_stream._stream.exitsignal
+    uv.stop()
+  end)
   uv.run()
   self._prepare:stop()
   self._timer:stop()

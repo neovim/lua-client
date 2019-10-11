@@ -36,5 +36,9 @@ run_tests() {
 }
 
 get_or_build_deps
+
+# Display info for logs.
 "${DEPS_INSTALL_PREFIX}/bin/luarocks" list
+${NVIM_PROG} --version
+
 run_tests

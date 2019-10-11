@@ -91,7 +91,7 @@ function test_session(description, session_factory, session_destroy)
           {session:request('vim_eval' , string.format('rpcrequest(%d, "lua_notify")', channel_id))})
         assert.are.same({true, {'hello from lua!'}},
           {session:request('vim_eval', string.format('rpcrequest(%d, "lua_method", 1, [1])', channel_id))})
-        assert.are.same({false, {0, 'Vim:error message'}},
+        assert.are.same({false, {0, "Vim:Error invoking 'lua_error' on channel 1:\nerror message" }},
           {session:request('vim_eval', string.format('rpcrequest(%d, "lua_error")', channel_id))})
         session:stop()
       end)

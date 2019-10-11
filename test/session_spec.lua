@@ -2,6 +2,8 @@ local ChildProcessStream = require('nvim.child_process_stream')
 local TcpStream = require('nvim.tcp_stream')
 local SocketStream = require('nvim.socket_stream')
 local Session = require('nvim.session')
+local coxpcall = require('coxpcall')
+local busted = require('busted')
 
 local nvim_prog = os.getenv('NVIM_PROG') or 'nvim'
 local child_session
@@ -82,19 +84,27 @@ function test_session(description, session_factory, session_destroy)
           {session:request('vim_eval', '[2, [3]')})
       end
 
+      local err
       session:run(on_request, on_notification, function()
-        assert.are.same({true, 'notified!'},
-          {session:request('vim_eval' , string.format('rpcrequest(%d, "lua_notify")', channel_id))})
-        assert.are.same({true, 'notified!'},
-          {session:request('vim_eval' , string.format('rpcrequest(%d, "lua_notify")', channel_id))})
-        assert.are.same({true, 'notified!'},
-          {session:request('vim_eval' , string.format('rpcrequest(%d, "lua_notify")', channel_id))})
-        assert.are.same({true, {'hello from lua!'}},
-          {session:request('vim_eval', string.format('rpcrequest(%d, "lua_method", 1, [1])', channel_id))})
-        assert.are.same({false, {0, 'Vim:error message'}},
-          {session:request('vim_eval', string.format('rpcrequest(%d, "lua_error")', channel_id))})
+        _, err = coxpcall.pcall(function()
+          assert.are.same({true, 'notified!'},
+            {session:request('vim_eval' , string.format('rpcrequest(%d, "lua_notify")', channel_id))})
+          assert.are.same({true, 'notified!'},
+            {session:request('vim_eval' , string.format('rpcrequest(%d, "lua_notify")', channel_id))})
+          assert.are.same({true, 'notified!'},
+            {session:request('vim_eval' , string.format('rpcrequest(%d, "lua_notify")', channel_id))})
+          assert.are.same({true, {'hello from lua!'}},
+            {session:request('vim_eval', string.format('rpcrequest(%d, "lua_method", 1, [1])', channel_id))})
+          assert.are.same({false, {0, string.format(
+              "Vim:Error invoking 'lua_error' on channel %d:\nerror message",
+              channel_id)}},
+            {session:request('vim_eval', string.format('rpcrequest(%d, "lua_error")', channel_id))})
+        end)
         session:stop()
       end)
+      if err then
+        busted.fail(err, 2)
+      end
       assert.are.equal(6, notified)
     end)
 

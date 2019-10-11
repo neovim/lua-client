@@ -63,6 +63,7 @@ function ChildProcessStream:close(signal)
   end
 
   uv.run()
+  assert(self.exitcode)
   native.pid_wait(self._pid)
 end
 

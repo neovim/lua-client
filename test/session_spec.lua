@@ -257,3 +257,11 @@ describe('stdio', function()
     assert.are.same({'notification', 'd', {6, 7}}, session:next_message())
   end)
 end)
+
+it('closing session does not hang with active loop', function()
+  local cmd = {nvim_prog, '-u', 'NONE', '--embed', '--headless'}
+  local session1 = Session.new(ChildProcessStream.spawn(cmd))
+  local session2 = Session.new(ChildProcessStream.spawn(cmd))
+  session1:close()
+  session2:close()
+end)

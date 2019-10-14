@@ -62,7 +62,9 @@ function ChildProcessStream:close(signal)
     self._proc:kill('sig'..signal)
   end
 
-  uv.run()
+  while not self.exitcode do
+    uv.run('once')
+  end
   assert(self.exitcode)
   native.pid_wait(self._pid)
 end

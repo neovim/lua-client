@@ -31,7 +31,7 @@ static const luaL_Reg native_lib_f[] = {
 int luaopen_nvim_native(lua_State *L) {
   lua_newtable(L);
 #if LUA_VERSION_NUM >= 502
-  luaL_setfuncs(L, native_lib_f, NULL);
+  luaL_setfuncs(L, native_lib_f, 0);
 #else
   luaL_register(L, NULL, native_lib_f);
 #endif

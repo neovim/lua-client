@@ -1,15 +1,8 @@
-local deps_prefix = './.deps/usr'
-if os.getenv('DEPS_PREFIX') then
-  deps_prefix = os.getenv('DEPS_PREFIX')
-end
-package.path =
-     deps_prefix
-  .. '/share/lua/5.1/?.lua;' .. deps_prefix .. '/share/lua/5.1/?/init.lua;'
-  .. package.path
-package.cpath =
-     deps_prefix
-  .. '/lib/lua/5.1/?.so;'
-  .. package.cpath
+--- stdio test fixture / program.
+--
+-- Lua's paths are passed as arguments to reflect the path in the test itself.
+package.path = arg[1]
+package.cpath = arg[2]
 local assert = require("luassert")
 
 local StdioStream = require('nvim.stdio_stream')

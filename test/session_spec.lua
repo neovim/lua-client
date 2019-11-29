@@ -249,7 +249,7 @@ describe('stdio', function()
   it('sends and receive data through stdout/stdin', function()
     local proc_stream = ChildProcessStream.spawn({
       arg[i_min],
-      'test/stdio_fixture.lua'
+      'test/stdio_fixture.lua', package.path, package.cpath
     })
     local session = Session.new(proc_stream)
     session:notify('a', 0, 1)

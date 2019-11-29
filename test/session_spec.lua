@@ -4,7 +4,7 @@ local SocketStream = require('nvim.socket_stream')
 local Session = require('nvim.session')
 local coxpcall = require('coxpcall')
 local busted = require('busted')
-local unpack = unpack or table.unpack -- luacheck: globals unpack (compatibility with Lua 5.1)
+local _compat = require('nvim._compat')
 
 local nvim_prog = os.getenv('NVIM_PROG') or 'nvim'
 local child_session
@@ -19,7 +19,7 @@ end
 local function test_session(description, session_factory, session_destroy)
   local get_api_info = function (session)
     local ok, res = session:request('vim_get_api_info')
-    return ok, unpack(res)
+    return ok, _compat.unpack(res)
   end
   describe(description, function()
     local closed, session

@@ -49,9 +49,9 @@ function MsgpackRpcStream.new(stream)
     _session = mpack.Session({
       unpack = mpack.Unpacker({
         ext = {
-          [0] = function(c, s) return Buffer.new(mpack.unpack(s)) end,
-          [1] = function(c, s) return Window.new(mpack.unpack(s)) end,
-          [2] = function(c, s) return Tabpage.new(mpack.unpack(s)) end
+          [0] = function(_c, s) return Buffer.new(mpack.unpack(s)) end,
+          [1] = function(_c, s) return Window.new(mpack.unpack(s)) end,
+          [2] = function(_c, s) return Tabpage.new(mpack.unpack(s)) end
         }
       })
     }),
@@ -76,7 +76,7 @@ function MsgpackRpcStream:read_start(request_cb, notification_cb, eof_cb)
     if not data then
       return eof_cb()
     end
-    local type, id_or_cb
+    local type, id_or_cb, method_or_error, args_or_result
     local pos = 1
     local len = #data
     while pos <= len do

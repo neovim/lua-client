@@ -1,7 +1,7 @@
 local coxpcall = require('coxpcall')
 local uv = require('luv')
 local MsgpackRpcStream = require('nvim.msgpack_rpc_stream')
-local unpack = unpack or table.unpack -- luacheck: globals unpack (compatibility with Lua 5.1)
+local _compat = require('nvim._compat')
 
 
 local Session = {}
@@ -31,7 +31,7 @@ local function coroutine_exec(func, ...)
   end
 
   resume(coroutine.create(function()
-    local status, result, flag = coxpcall.pcall(func, unpack(args))
+    local status, result, flag = coxpcall.pcall(func, _compat.unpack(args))
     if on_complete then
       coroutine.yield(function()
         -- run the completion callback on the main thread

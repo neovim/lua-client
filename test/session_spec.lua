@@ -4,6 +4,7 @@ local SocketStream = require('nvim.socket_stream')
 local Session = require('nvim.session')
 local coxpcall = require('coxpcall')
 local busted = require('busted')
+require('nvim._compat')
 
 local nvim_prog = os.getenv('NVIM_PROG') or 'nvim'
 local child_session

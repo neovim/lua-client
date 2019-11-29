@@ -1,6 +1,7 @@
 local coxpcall = require('coxpcall')
 local uv = require('luv')
 local MsgpackRpcStream = require('nvim.msgpack_rpc_stream')
+require('nvim._compat')
 
 
 local Session = {}

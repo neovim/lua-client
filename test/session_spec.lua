@@ -18,7 +18,7 @@ end
 
 local function test_session(description, session_factory, session_destroy)
   local get_api_info = function (session)
-    local ok, res = session:request('vim_get_api_info')
+    local ok, res = session:request('nvim_get_api_info')
     return ok, unpack(res)
   end
   describe(description, function()
@@ -31,13 +31,13 @@ local function test_session(description, session_factory, session_destroy)
 
     after_each(function()
       if not closed then
-        session:request('vim_command', 'qa!')
+        session:request('nvim_command', 'qa!')
       end
     end)
 
     it('can make requests to nvim', function()
       assert.are.same({true, {1, 2, 3}},
-        {session:request('vim_eval', '[1, 2, 3]')})
+        {session:request('nvim_eval', '[1, 2, 3]')})
     end)
 
     it('can get api metadata', function()
@@ -53,7 +53,7 @@ local function test_session(description, session_factory, session_destroy)
     it('can receive messages from nvim', function()
       local _, channel_id, _ = get_api_info(session)
       assert.are.same({true, 1},
-        {session:request('vim_eval', string.format('rpcnotify(%d, "lua_event", 1, [1])', channel_id))})
+        {session:request('nvim_eval', string.format('rpcnotify(%d, "lua_event", 1, [1])', channel_id))})
       assert.are.same({'notification', 'lua_event', {1, {1}}},
         session:next_message())
     end)
@@ -64,9 +64,9 @@ local function test_session(description, session_factory, session_destroy)
       local function on_request(method, args)
         if method == 'lua_notify' then
           assert.are.same({true, 1},
-            {session:request('vim_eval', string.format('rpcnotify(%d, "lua_event", 2, [2])', channel_id))})
+            {session:request('nvim_eval', string.format('rpcnotify(%d, "lua_event", 2, [2])', channel_id))})
           assert.are.same({true, 1},
-            {session:request('vim_eval', string.format('rpcnotify(%d, "lua_event", 2, [2])', channel_id))})
+            {session:request('nvim_eval', string.format('rpcnotify(%d, "lua_event", 2, [2])', channel_id))})
           return 'notified!'
         elseif method == 'lua_error' then
           return 'error message', true
@@ -82,24 +82,24 @@ local function test_session(description, session_factory, session_destroy)
         assert.are.same('lua_event', method)
         assert.are.same({2, {2}}, args)
         assert.are.same({true, {2, {3}}},
-          {session:request('vim_eval', '[2, [3]')})
+          {session:request('nvim_eval', '[2, [3]')})
       end
 
       local err
       session:run(on_request, on_notification, function()
         _, err = coxpcall.pcall(function()
           assert.are.same({true, 'notified!'},
-            {session:request('vim_eval' , string.format('rpcrequest(%d, "lua_notify")', channel_id))})
+            {session:request('nvim_eval' , string.format('rpcrequest(%d, "lua_notify")', channel_id))})
           assert.are.same({true, 'notified!'},
-            {session:request('vim_eval' , string.format('rpcrequest(%d, "lua_notify")', channel_id))})
+            {session:request('nvim_eval' , string.format('rpcrequest(%d, "lua_notify")', channel_id))})
           assert.are.same({true, 'notified!'},
-            {session:request('vim_eval' , string.format('rpcrequest(%d, "lua_notify")', channel_id))})
+            {session:request('nvim_eval' , string.format('rpcrequest(%d, "lua_notify")', channel_id))})
           assert.are.same({true, {'hello from lua!'}},
-            {session:request('vim_eval', string.format('rpcrequest(%d, "lua_method", 1, [1])', channel_id))})
+            {session:request('nvim_eval', string.format('rpcrequest(%d, "lua_method", 1, [1])', channel_id))})
           assert.are.same({false, {0, string.format(
               "Vim:Error invoking 'lua_error' on channel %d:\nerror message",
               channel_id)}},
-            {session:request('vim_eval', string.format('rpcrequest(%d, "lua_error")', channel_id))})
+            {session:request('nvim_eval', string.format('rpcrequest(%d, "lua_error")', channel_id))})
         end)
         session:stop()
       end)
@@ -117,13 +117,13 @@ local function test_session(description, session_factory, session_destroy)
         assert.are.same("method", method)
         requested = requested + 1
         if requested < 10 then
-          session:request('vim_eval' , string.format('rpcrequest(%d, "method")', channel_id))
+          session:request('nvim_eval' , string.format('rpcrequest(%d, "method")', channel_id))
         end
         return requested
       end
 
       session:run(on_request, nil, function()
-        session:request('vim_eval' , string.format('rpcrequest(%d, "method")', channel_id))
+        session:request('nvim_eval' , string.format('rpcrequest(%d, "method")', channel_id))
         session:stop()
       end)
       assert.are.equal(10, requested)
@@ -131,7 +131,7 @@ local function test_session(description, session_factory, session_destroy)
 
     it('can receive errors from nvim', function()
       local _, channel_id, _ = get_api_info(session)
-      local status, result = session:request('vim_eval',
+      local status, result = session:request('nvim_eval',
         string.format('rpcrequest(%d, "method", 1, 2', channel_id))
       assert.is_false(status)
       -- Improved parsing in nvim changed the error message between 0.2.2 and
@@ -146,7 +146,7 @@ local function test_session(description, session_factory, session_destroy)
     it('can break out of event loop with a timeout', function()
       local responded = false
       session:run(nil, nil, function()
-        session:request('vim_command' , 'sleep 5')
+        session:request('nvim_command' , 'sleep 5')
         responded = true
       end, 50)
       assert.is_false(responded)
@@ -174,7 +174,7 @@ test_session(string.format("Session using SocketStream [%s]", socket_file), func
     nvim_prog, '-u', 'NONE', '--embed', '--headless',
     '--cmd', string.format('call serverstart("%s")', socket_file)
   }))
-  child_session:request('vim_eval', '1') -- wait for nvim to start
+  child_session:request('nvim_eval', '1') -- wait for nvim to start
   local socket_stream = SocketStream.open(socket_file)
   socket_session = Session.new(socket_stream)
   return socket_session
@@ -201,7 +201,7 @@ describe('Session using SocketStream', function ()
 
   it('throws ENOENT error when socket does not exist', function ()
     assert.has_error(function ()
-      socket_session:request('vim_eval', '1 + 1 + 1')
+      socket_session:request('nvim_eval', '1 + 1 + 1')
     end, "ENOENT")
   end)
 end)
@@ -213,7 +213,7 @@ test_session("Session using TcpStream", function ()
     '--cmd', 'call serverstart("127.0.0.1:6666")'
   }))
 
-  child_session:request('vim_eval', '1')  -- wait for nvim to start
+  child_session:request('nvim_eval', '1')  -- wait for nvim to start
   local tcp_stream = TcpStream.open("127.0.0.1", 6666)
   tcp_session = Session.new(tcp_stream)
   return tcp_session
@@ -234,7 +234,7 @@ describe('Session using TcpStream', function ()
 
   it('throws ECONNREFUSED error if neovim does not expose the TCP socket', function ()
     assert.has_error(function ()
-      tcp_session:request('vim_eval', '1 + 1 + 1')
+      tcp_session:request('nvim_eval', '1 + 1 + 1')
     end, "ECONNREFUSED")
   end)
 end)

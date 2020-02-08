@@ -232,7 +232,9 @@ describe('Session using TcpStream', function ()
     tcp_session:close()
   end)
 
-  it('throws ECONNREFUSED error if neovim does not expose the TCP socket', function ()
+  -- TODO(justinmk): Call luv_set_callback() to fail correctly?
+  -- https://github.com/luvit/luv/pull/350
+  pending('(see luv issue: https://github.com/luvit/luv/pull/350 ) TCP socket throws ECONNREFUSED if Nvim is not listening', function ()
     assert.has_error(function ()
       tcp_session:request('nvim_eval', '1 + 1 + 1')
     end, "ECONNREFUSED")

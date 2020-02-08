@@ -6,7 +6,8 @@ source = {
 }
 description = {
   summary = 'Lua client to Nvim',
-  license = 'Apache'
+  license = 'Apache',
+  homepage = 'https://github.com/neovim/lua-client',
 }
 dependencies = {
   'lua >= 5.1',

@@ -19,7 +19,9 @@ function ChildProcessStream.spawn(argv, env, io_extra)
     stdio = {self._child_stdin, self._child_stdout, 2, io_extra},
     args = args,
     env = env,
-  }, function()
+  }, function(code, signal)
+    self.exitcode = code
+    self.exitsignal = signal
     self:close()
   end)
 
@@ -59,8 +61,11 @@ function ChildProcessStream:close(signal)
   if type(signal) == 'string' then
     self._proc:kill('sig'..signal)
   end
-  self._proc:close()
-  uv.run('nowait')
+
+  while not self.exitcode do
+    uv.run('once')
+  end
+  assert(self.exitcode)
   native.pid_wait(self._pid)
 end
 

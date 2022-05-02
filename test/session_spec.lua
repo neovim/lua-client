@@ -154,6 +154,8 @@ local function test_session(description, session_factory, session_destroy)
         session_destroy()
       else
         session:close()
+        assert.are.equal(0, session.child_exit)
+        assert.are.equal(0, session.child_signal)
       end
       closed = true
     end)
@@ -180,6 +182,8 @@ test_session(string.format("Session using SocketStream [%s]", socket_file), func
   return socket_session
 end, function ()
   child_session:close()
+  assert.are.equal(0, child_session.child_exit)
+  assert.are.equal(0, child_session.child_signal)
   socket_session:close()
   -- clean up leftovers if something goes wrong
   local fd = io.open(socket_file)
@@ -219,6 +223,8 @@ test_session("Session using TcpStream", function ()
   return tcp_session
 end, function ()
   child_session:close()
+  assert.are.equal(0, child_session.child_exit)
+  assert.are.equal(0, child_session.child_signal)
   tcp_session:close()
 end)
 
@@ -259,4 +265,12 @@ describe('stdio', function()
     session:notify('c', 4, 5)
     assert.are.same({'notification', 'd', {6, 7}}, session:next_message())
   end)
+end)
+
+it('closing session does not hang with active loop', function()
+  local cmd = {nvim_prog, '-u', 'NONE', '--embed', '--headless'}
+  local session1 = Session.new(ChildProcessStream.spawn(cmd))
+  local session2 = Session.new(ChildProcessStream.spawn(cmd))
+  session1:close()
+  session2:close()
 end)

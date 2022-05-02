@@ -136,6 +136,12 @@ function Session:close(signal)
   if not self._timer:is_closing() then self._timer:close() end
   if not self._prepare:is_closing() then self._prepare:close() end
   self._msgpack_rpc_stream:close(signal)
+
+  if not self.child_exit then
+    uv.run('nowait')  -- run the loop to get exitcode from child process.
+    self.child_exit = self._msgpack_rpc_stream._stream.exitcode
+    self.child_signal = self._msgpack_rpc_stream._stream.exitsignal
+  end
 end
 
 function Session:_yielding_request(method, args)
@@ -176,7 +182,12 @@ function Session:_run(request_cb, notification_cb, timeout)
       self._prepare:stop()
     end)
   end
-  self._msgpack_rpc_stream:read_start(request_cb, notification_cb, uv.stop)
+  self._msgpack_rpc_stream:read_start(request_cb, notification_cb, function()
+    uv.run()  -- run the loop to get exitcode from child process.
+    self.child_exit = self._msgpack_rpc_stream._stream.exitcode
+    self.child_signal = self._msgpack_rpc_stream._stream.exitsignal
+    uv.stop()
+  end)
   uv.run()
   self._prepare:stop()
   self._timer:stop()

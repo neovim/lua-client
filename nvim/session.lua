@@ -164,7 +164,7 @@ function Session:_blocking_request(method, args)
   end)
 
   self:_run(on_request, on_notification)
-  return err, result
+  return (err or self.eof_err), result
 end
 
 function Session:_run(request_cb, notification_cb, timeout)
@@ -176,7 +176,10 @@ function Session:_run(request_cb, notification_cb, timeout)
       self._prepare:stop()
     end)
   end
-  self._msgpack_rpc_stream:read_start(request_cb, notification_cb, uv.stop)
+  self._msgpack_rpc_stream:read_start(request_cb, notification_cb, function() 
+    uv.stop()
+    self.eof_err = {1, "EOF was received from Nvim. Likely the Nvim process crashed."}
+  end)
   uv.run()
   self._prepare:stop()
   self._timer:stop()

@@ -12,6 +12,22 @@ The `Makefile` pulls and builds various dependencies into `.deps`.
 
      make
 
+To build on platforms other than linux, specify a `LUA_TARGET`, e.g.
+
+    LUA_TARGET=macosx build
+
+Valid `LUA_TARGET`s are those supported by lua 5.1 i.e. one of:
+  * aix
+  * ansi
+  * bsd
+  * freebsd
+  * generic
+  * linux
+  * macosx
+  * mingw
+  * posix
+  * solaris
+
 Test
 ----
 

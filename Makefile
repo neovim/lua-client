@@ -27,7 +27,7 @@ COXPCALL ?= $(DEPS_PREFIX)/lib/luarocks/rocks/coxpcall
 CC ?= gcc
 CFLAGS ?= -g -fPIC -Wall -Wextra -Werror -Wconversion -Wextra \
 	-Wstrict-prototypes -pedantic
-LDFLAGS ?= -shared -fPIC
+LDFLAGS ?= -shared -fPIC -undefined dynamic_lookup
 DEPS_INCLUDE_FLAGS ?= -I$(DEPS_PREFIX)/include
 
 # Misc

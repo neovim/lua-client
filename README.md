@@ -5,6 +5,15 @@ lua-client
 
 Lua client for Neovim
 
+Future plans
+------------
+
+The future of lua-client (this repo) is grim, because the future of Nvim Lua is supple and verdant:
+
+1. Nvim core will gain the ability to run Lua code via `nvim -l`.
+2. We will include some sort of Lua client in Nvim core. Perhaps starting with https://github.com/justinmk/lua-client2
+3. Legacy lua-client (this repo) will be archived.
+
 Build
 -----
 

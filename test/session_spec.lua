@@ -4,6 +4,7 @@ local SocketStream = require('nvim.socket_stream')
 local Session = require('nvim.session')
 local coxpcall = require('coxpcall')
 local busted = require('busted')
+local uv = require('luv')
 require('nvim._compat')
 
 local nvim_prog = os.getenv('NVIM_PROG') or 'nvim'
@@ -166,6 +167,38 @@ test_session("Session using ChidProcessStream", function ()
     nvim_prog, '-u', 'NONE', '--embed',
   })
   return Session.new(proc_stream)
+end)
+
+describe("ChildProcessStream", function()
+  local session, proc_stream
+
+  before_each(function()
+    proc_stream = ChildProcessStream.spawn({
+      nvim_prog, '--clean', '--embed',
+    })
+    session = Session.new(proc_stream)
+    session:request "nvim_get_api_info"
+  end)
+
+  after_each(function()
+    session:close()
+    proc_stream:close()
+  end)
+
+  it("can capture exit code", function()
+    session:request("nvim_command", "qall!")
+    uv.run()
+
+    assert.is.same(proc_stream._exit_code, 0)
+    assert.is.same(proc_stream._signal, 0)
+  end)
+
+  it("can can capture signal", function()
+    session:close "kill"
+
+    assert.is.same(proc_stream._exit_code, 0)
+    assert.is.same(proc_stream._signal, 9)
+  end)
 end)
 
 -- Session using SocketStream
